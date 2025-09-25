@@ -1,0 +1,30 @@
+# Node_modules or frontend dependencies (optional if frontend uses Node)
+frontend/node_modules/
+
+# Environment files
+*.env
+*.env.local
+*.env.*.local
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# JetBrains / IDEs
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Ignore backend and frontend build outputs at root level
+api/bin/
+api/obj/
+api/publish/
+frontend/dist/
+frontend/build/

@@ -1,0 +1,48 @@
+# Build outputs
+bin/
+obj/
+out/
+publish/
+
+# User-specific files
+*.user
+*.userosscache
+*.suo
+*.userprefs
+*.pidb
+*.svd
+
+# IDE configs
+.vscode/
+.idea/
+*.sln.docstates
+
+# ASP.NET Core / .NET
+appsettings.*.json
+*.log
+wwwroot/lib/
+
+# NuGet
+*.nupkg
+*.snupkg
+*.nuspec
+packages/
+.nuget/
+
+# EF Core Migrations (optional, commit if you want migration history)
+Migrations/
+
+# Test result files
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+*.vsmdi
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Secrets
+secrets.json
