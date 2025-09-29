@@ -7,6 +7,6 @@ namespace Api.Models
 
         public double PositionY { get; set; }
 
-        public boolean HasHookedFish { get; set; } 
+        public bool HasHookedFish { get; set; } 
     }
 }

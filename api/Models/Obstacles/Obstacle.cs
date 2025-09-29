@@ -8,8 +8,8 @@ namespace Api.Models
         public double PositionY { get; set; }
 
         // Obstacle belongs to an environment
-        public Environment? Environment { get; set; }
-        public int EnvironmentId { get; set; }
+        public GameEnvironment? GameEnvironment { get; set; }
+        public int GameEnvironmentId { get; set; }
         
     }
 }

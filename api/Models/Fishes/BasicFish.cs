@@ -8,7 +8,7 @@ namespace Api.Models
 
         public double MovementSpeed { get; set; } = 10.0;
 
-        public boolean HasBeenHooked { get; set; } = false;
-        
+        public bool HasBeenHooked { get; set; } = false;
+
     }
 }
