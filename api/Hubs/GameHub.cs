@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 
-namespace YourProjectNamespace.Hubs
+namespace Api.Hubs
 {
     public class GameHub : Hub
     {
