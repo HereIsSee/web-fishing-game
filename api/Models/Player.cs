@@ -4,9 +4,11 @@ namespace Api.Models
     {
         public int Id { get; set; }
 
+        public string ConnectionId { get; set; }
+
         public string Name { get; set; } = string.Empty;
 
-        public int Score {get; set; } = 0;
+        public int Score { get; set; } = 0;
 
         public int FishesPulledIn { get; set; } = 0;
 
@@ -21,5 +23,8 @@ namespace Api.Models
         // Player belongs to a game
         public Game? Game { get; set; }
         public int GameId { get; set; }
+        
+        public int SessionId { get; set; }
+        public Session Session { get; set; }
     }
 }

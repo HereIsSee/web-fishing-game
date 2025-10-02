@@ -1,19 +1,37 @@
+using Api.Models;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Api.Hubs
 {
     public class GameHub : Hub
     {
-        // Called when a player joins
-        public async Task JoinGame(string playerName)
-        {
-            await Clients.All.SendAsync("PlayerJoined", playerName);
-        }
+        private static Session _session = new Session(); // Visada yra
 
-        // Called when a player performs an action
-        public async Task PlayerAction(string playerName, string action)
+        public async Task JoinSession(string playerName)
         {
-            await Clients.All.SendAsync("UpdateAction", playerName, action);
+            Console.WriteLine($"🎣 Player {playerName} joining session...");
+            
+            _session.AddPlayer(Context.ConnectionId, playerName);
+            await Clients.All.SendAsync("PlayerJoined", playerName);
+            
+            Console.WriteLine($"✅ Player {playerName} joined!");
+        }
+        public async Task LeaveSession()
+        {
+            _session.RemovePlayer(Context.ConnectionId);
+            await Clients.All.SendAsync("PlayerLeft", Context.ConnectionId);
+        }
+        public async Task StartGame()
+        {
+            // Paleisti žaidimą iškart, net jei mažai žaidėjų
+            _session.StartGame();
+            await Clients.All.SendAsync("GameStarted", _session.TimerDuration);
+        }
+        public override async Task OnDisconnectedAsync(Exception exception)
+        {
+            _session.RemovePlayer(Context.ConnectionId);
+            await Clients.Others.SendAsync("PlayerLeft", Context.ConnectionId);
+            await base.OnDisconnectedAsync(exception);
         }
     }
 }
