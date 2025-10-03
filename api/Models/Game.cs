@@ -12,7 +12,7 @@ namespace Api.Models
         public Scoreboard? Scoreboard { get; set; }
         public int ScoreboardId { get; set; }
 
-        //Game has players
+        //Game has players NO LONGER TRUE, SESSION HAS PLAYERS
         public List<Player> Players { get; set; } = new();
 
         // Game belongs to a session 1 to 1

@@ -20,7 +20,7 @@ namespace Api.Models
         public int FishingRodId { get; set; }
         public FishingRod? FishingRod { get; set; }
 
-        // Player belongs to a game
+        // Player belongs to a game NO LONGER THE CASE PLAYER BELONGS TO SESSION
         public Game? Game { get; set; }
         public int GameId { get; set; }
         
