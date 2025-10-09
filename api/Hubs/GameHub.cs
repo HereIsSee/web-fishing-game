@@ -33,7 +33,7 @@ namespace Api.Hubs
             _session.UpdatePlayerPosition(Context.ConnectionId, PositionX);
             var player = _session.GetPlayer(Context.ConnectionId);
 
-            await Clients.All.SendAsync("PlayerMove", player);
+            await Clients.Others.SendAsync("PlayerMove", player);
         } 
 
         public override async Task OnDisconnectedAsync(Exception exception)

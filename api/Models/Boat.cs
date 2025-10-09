@@ -8,6 +8,14 @@ namespace Api.Models
         public double PositionX { get; set; }
         public double PositionY { get; set; }
         public double MovementSpeed { get; set; }
-    
+
+        public Boat(double positionX, double positionY)
+        {
+            this.Width = 20;
+            this.Height = 10;
+            this.PositionX = positionX;
+            this.PositionY = positionY;
+            this.MovementSpeed = 10.0;
+        }
     }
 }

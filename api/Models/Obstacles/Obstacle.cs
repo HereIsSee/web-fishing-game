@@ -19,5 +19,27 @@ namespace Api.Models
         public int ResistencePercentage { get; set; }
 
         public ObstacleType ObstacleType { get; set; } = ObstacleType.Seaweed;
+
+        public Obstacle(ObstacleType type, double positionX, double positionY)
+        {
+            this.PositionX = positionX;
+            this.PositionY = positionY;
+
+            switch (type)
+            {
+                case ObstacleType.Seaweed:
+                    this.ResistencePercentage = 30;
+                    this.Width = 30;
+                    this.Height = 70;
+                    break;
+                case ObstacleType.Rock:
+                    this.ResistencePercentage = 100;
+                    this.Width = 20;
+                    this.Height = 20;
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 }

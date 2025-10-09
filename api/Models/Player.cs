@@ -18,5 +18,15 @@ namespace Api.Models
         // Player has a fishing rod
         public FishingRod FishingRod { get; set; } = null!;
 
+        public Player(string connectionId, string name, double positionX, double positionY)
+        {
+            this.ConnectionId = connectionId;
+            this.Name = name;
+            this.Score = 0;
+            this.FishesPulledIn = 0;
+            this.Boat = new Boat(positionX, positionY);
+            this.FishingRod = new FishingRod(positionX, positionY);
+        }
+
     }
 }

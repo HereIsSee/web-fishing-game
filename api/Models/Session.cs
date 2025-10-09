@@ -10,31 +10,27 @@ namespace Api.Models
         public bool IsActive { get; set; } = true;
 
         // Session has a Game 1 to 1
-        public Game Game { get; set; } = new Game();
-
-        // PRIDĖTI: Žaidėjų sąrašas
+        public Game Game { get; set; }
         public ConcurrentDictionary<string, Player> Players { get; } = new();
 
-        // PRIDĖTI: Žaidimo būsenos
         public GameState State { get; set; } = GameState.Waiting;
-        public int TimerDuration { get; set; } = 300; // 5 minučių
+        public int TimerDuration { get; set; } = 300;
 
-        // PRIDĖTI: Metodai žaidėjų valdymui
+        public Session()
+        {
+
+            this.StartTime = DateTime.UtcNow;
+            this.Game = new Game(800, 600, 500, 30, 10);
+        }
+
         public void AddPlayer(string connectionId, string playerName)
         {
-            Players[connectionId] = new Player
-            {
-                ConnectionId = connectionId,
-                Name = playerName,
-                Score = 0,
-                SessionId = this.Id, // Susiejame žaidėją su sesija
-                Boat = new Boat
-                {
-                    PositionX = 0,
-                    PositionY = 0,
-                    MovementSpeed = 0,
-                }
-            };
+            Random rnd = new Random();
+            double positionX = rnd.Next(0, 800);
+
+            Players[connectionId] = new Player(
+                connectionId, playerName, positionX, 500.0
+            );
         }
 
         public Player GetPlayer(string connectionId)
