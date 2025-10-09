@@ -1,14 +1,9 @@
-using Microsoft.EntityFrameworkCore;
-using Npgsql;
-using Api.Data;
 using Api.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 // Add Cors
 builder.Services.AddCors(options =>
 {
@@ -45,7 +40,7 @@ if (app.Environment.IsDevelopment())
 
 //app.UseHttpsRedirection();
 
-app.UseAuthorization();
+// app.UseAuthorization();
 
 app.MapControllers();
 

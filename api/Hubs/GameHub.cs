@@ -11,6 +11,7 @@ namespace Api.Hubs
         {
             Console.WriteLine($"🎣 Player {playerName} joining session...");
             
+            // When a player joins the game create a new boat for him
             _session.AddPlayer(Context.ConnectionId, playerName);
             await Clients.All.SendAsync("PlayerJoined", playerName);
             
@@ -27,11 +28,20 @@ namespace Api.Hubs
             _session.StartGame();
             await Clients.All.SendAsync("GameStarted", _session.TimerDuration);
         }
+        public async Task PlayerMove(double PositionX)
+        {
+            _session.UpdatePlayerPosition(Context.ConnectionId, PositionX);
+            var player = _session.GetPlayer(Context.ConnectionId);
+
+            await Clients.All.SendAsync("PlayerMove", player);
+        } 
+
         public override async Task OnDisconnectedAsync(Exception exception)
         {
             _session.RemovePlayer(Context.ConnectionId);
             await Clients.Others.SendAsync("PlayerLeft", Context.ConnectionId);
             await base.OnDisconnectedAsync(exception);
         }
+        
     }
 }

@@ -8,11 +8,9 @@ namespace Api.Models
         public DateTime StartTime { get; set; } = DateTime.UtcNow;
         public DateTime? EndTime { get; set; }
         public bool IsActive { get; set; } = true;
-        public string SessionCode { get; set; } = string.Empty;
-        
+
         // Session has a Game 1 to 1
-        public Game? Game { get; set; }
-        public int GameId { get; set; }
+        public Game Game { get; set; } = new Game();
 
         // PRIDĖTI: Žaidėjų sąrašas
         public ConcurrentDictionary<string, Player> Players { get; } = new();
@@ -24,13 +22,32 @@ namespace Api.Models
         // PRIDĖTI: Metodai žaidėjų valdymui
         public void AddPlayer(string connectionId, string playerName)
         {
-            Players[connectionId] = new Player 
-            { 
-                ConnectionId = connectionId, 
+            Players[connectionId] = new Player
+            {
+                ConnectionId = connectionId,
                 Name = playerName,
                 Score = 0,
-                SessionId = this.Id // Susiejame žaidėją su sesija
+                SessionId = this.Id, // Susiejame žaidėją su sesija
+                Boat = new Boat
+                {
+                    PositionX = 0,
+                    PositionY = 0,
+                    MovementSpeed = 0,
+                }
             };
+        }
+
+        public Player GetPlayer(string connectionId)
+        {
+            return Players[connectionId];
+        }
+        public void UpdatePlayerPosition(string connectionId, double PositionX)
+        {
+            var player = Players[connectionId];
+            if (player.Boat != null)
+            {
+                player.Boat.PositionX = PositionX;
+            }
         }
 
         public void RemovePlayer(string connectionId)

@@ -13,18 +13,10 @@ namespace Api.Models
         public int FishesPulledIn { get; set; } = 0;
 
         // Player has a boat
-        public int BoatId { get; set; }
-        public Boat? Boat { get; set; }
+        public Boat Boat { get; set; }
 
         // Player has a fishing rod
-        public int FishingRodId { get; set; }
-        public FishingRod? FishingRod { get; set; }
+        public FishingRod FishingRod { get; set; } = null!;
 
-        // Player belongs to a game NO LONGER THE CASE PLAYER BELONGS TO SESSION
-        public Game? Game { get; set; }
-        public int GameId { get; set; }
-        
-        public int SessionId { get; set; }
-        public Session Session { get; set; }
     }
 }

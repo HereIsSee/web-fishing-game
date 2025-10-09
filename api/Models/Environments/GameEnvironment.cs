@@ -4,6 +4,11 @@ namespace Api.Models
     {
         public int Id { get; set; }
 
+        public int Width { get; set; }
+        public int Height { get; set; }
+
+        public int WaterLevelHeight { get; set; }
+        
         // Environment has fishes
         public List<Fish> Fishes { get; set; } = new();
 
