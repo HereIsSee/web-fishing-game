@@ -21,6 +21,15 @@ function App() {
     setConnection(newConnection);
   }, []);
 
+  useEffect(() => {
+    if (connection) {
+      connection.on("BoatMoved", (playerId, positionX) => {
+        console.log(`Player ${playerId} moved ${positionX}`);
+        // Update other players' boat positions visually
+      });
+    }
+  }, [connection]);
+
 const joinGame = async () => {
     if (!playerName.trim() || !connection) return;
 
@@ -74,7 +83,7 @@ const joinGame = async () => {
         </div>
       ) : gameStarted ? (
         <div>
-          <Game />
+          <Game connection={connection} />
           <button onClick={()=> setGameStarted(false)}>Leave Game</button>
         </div>
       ) : (
