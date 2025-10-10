@@ -28,14 +28,21 @@ namespace Api.Hubs
             _session.StartGame();
             await Clients.All.SendAsync("GameStarted", _session.TimerDuration);
         }
-        public async Task PlayerMove(double PositionX)
+        public async Task MoveBoat(string direction) // "left", "right",
         {
-            _session.UpdatePlayerPosition(Context.ConnectionId, PositionX);
-            var player = _session.GetPlayer(Context.ConnectionId);
+            // For now: just send event to all players
+            await Clients.Others.SendAsync("BoatMoved", Context.ConnectionId, direction);
 
-            await Clients.Others.SendAsync("PlayerMove", player);
-        } 
-
+            Console.WriteLine($"Player {Context.ConnectionId} moved boat {direction}");
+        }
+        public async Task MoveBoatTo(float positionX)
+        {
+            Console.WriteLine($"🎯 MoveBoatTo called: Player {Context.ConnectionId} -> {positionX}");
+            Console.WriteLine($"👥 Connected clients: {Context.ConnectionId} sending to others");
+            await Clients.Others.SendAsync("BoatMovedTo", Context.ConnectionId, positionX);
+            Console.WriteLine($"Player {Context.ConnectionId} moved to {positionX}");
+        }
+        
         public override async Task OnDisconnectedAsync(Exception exception)
         {
             _session.RemovePlayer(Context.ConnectionId);
