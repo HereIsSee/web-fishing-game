@@ -10,12 +10,19 @@ namespace Api.Hubs
         public async Task JoinSession(string playerName)
         {
             Console.WriteLine($"🎣 Player {playerName} joining session...");
-            
+
             // When a player joins the game create a new boat for him
             _session.AddPlayer(Context.ConnectionId, playerName);
-            await Clients.All.SendAsync("PlayerJoined", playerName);
-            
+
+            var player = _session.GetPlayer(Context.ConnectionId);
+
+            await Clients.All.SendAsync("PlayerJoined", player);
+            await Clients.Caller.SendAsync("ReceiveConnectionId", Context.ConnectionId);
+
             Console.WriteLine($"✅ Player {playerName} joined!");
+            Console.WriteLine($"Player {Context.ConnectionId} connection id!");
+            
+            
         }
         public async Task LeaveSession()
         {
@@ -31,15 +38,18 @@ namespace Api.Hubs
         public async Task MoveBoat(string direction) // "left", "right",
         {
             // For now: just send event to all players
-            await Clients.Others.SendAsync("BoatMoved", Context.ConnectionId, direction);
+            await Clients.All.SendAsync("BoatMoved", Context.ConnectionId, direction);
 
             Console.WriteLine($"Player {Context.ConnectionId} moved boat {direction}");
         }
         public async Task MoveBoatTo(float positionX)
         {
-            Console.WriteLine($"🎯 MoveBoatTo called: Player {Context.ConnectionId} -> {positionX}");
-            Console.WriteLine($"👥 Connected clients: {Context.ConnectionId} sending to others");
-            await Clients.Others.SendAsync("BoatMovedTo", Context.ConnectionId, positionX);
+            var player = _session.GetPlayer(Context.ConnectionId);
+
+            player.Boat.setPositionX(positionX);
+
+            await Clients.All.SendAsync("BoatMovedTo", player);
+            
             Console.WriteLine($"Player {Context.ConnectionId} moved to {positionX}");
         }
         

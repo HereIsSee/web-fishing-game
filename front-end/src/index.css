@@ -54,6 +54,11 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+#game{
+  border: 10px rgb(34, 30, 30) solid;
+  border-radius: 15px;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

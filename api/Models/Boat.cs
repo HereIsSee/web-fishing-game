@@ -17,5 +17,10 @@ namespace Api.Models
             this.PositionY = positionY;
             this.MovementSpeed = 10.0;
         }
+
+        public void setPositionX(double x)
+        {
+            this.PositionX = x;
+        }
     }
 }
