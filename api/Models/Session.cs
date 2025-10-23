@@ -7,10 +7,10 @@ namespace Api.Models
         public int Id { get; set; }
         public DateTime StartTime { get; set; } = DateTime.UtcNow;
         public DateTime? EndTime { get; set; }
-        public bool IsActive { get; set; } = true;
+        public bool IsActive { get; set; } = false;
 
-        // Session has a Game 1 to 1
-        public Game Game { get; set; }
+        public Scoreboard Scoreboard { get; set; }
+        public GameEnvironment Environment { get; set; }
         public ConcurrentDictionary<string, Player> Players { get; } = new();
 
         public GameState State { get; set; } = GameState.Waiting;
@@ -20,7 +20,8 @@ namespace Api.Models
         {
 
             this.StartTime = DateTime.UtcNow;
-            this.Game = new Game(800, 600, 500, 30, 10);
+            this.Environment = new GameEnvironment(800, 600, 500, 30, 10);
+            this.IsActive = false;
         }
 
         public void AddPlayer(string connectionId, string playerName)

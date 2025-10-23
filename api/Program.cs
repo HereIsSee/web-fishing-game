@@ -1,4 +1,5 @@
 using Api.Hubs;
+using Api.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,13 @@ builder.Services.AddCors(options =>
 });
 // Add SignalR 
 builder.Services.AddSignalR();
+
+// Add logging
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
+// Register Session as a singleton so background tasks share it
+builder.Services.AddSingleton<Session>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

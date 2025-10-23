@@ -53,5 +53,14 @@ namespace Api.Models
                 Obstacles.Add(new Obstacle(type, posX, posY));
             }
         }
+
+        public void Update()
+        {
+            foreach (var fish in Fishes)
+            {
+                fish.UpdatePosition(Width, WaterLevelHeight);
+            }
+        }
+
     }
 }
