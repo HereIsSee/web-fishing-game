@@ -60,23 +60,41 @@ namespace Api.Hubs
             });
         }
 
-        public async Task MoveBoat(string direction) // "left", "right",
-        {
-            // For now: just send event to all players
-            await Clients.All.SendAsync("BoatMoved", Context.ConnectionId, direction);
-
-            Console.WriteLine($"Player {Context.ConnectionId} moved boat {direction}");
-        }
         public async Task MoveBoatTo(float positionX)
         {
             var player = _session.GetPlayer(Context.ConnectionId);
 
-            player.Boat.setPositionX(positionX);
+            player.UpdateBoatPosition(positionX);
 
             await Clients.All.SendAsync("BoatMovedTo", player);
-            
+
             Console.WriteLine($"Player {Context.ConnectionId} moved to {positionX}");
         }
+        public async Task ToggleFishingRodCast()
+        {
+            var player = _session.GetPlayer(Context.ConnectionId);
+
+            // Update hook position
+            player.ToggleFishingRodCast();
+
+            await Clients.All.SendAsync("FishingRodCastChanged", player);
+
+            Console.WriteLine($"Player {Context.ConnectionId} has toggled his cast");
+        } 
+        public async Task MoveHook(float positionX, float positionY)
+        {
+            var player = _session.GetPlayer(Context.ConnectionId);
+
+            if (player == null) return;
+
+            // Update hook position
+            player.FishingRod.PositionX = positionX;
+            player.FishingRod.PositionY = positionY;
+
+            await Clients.All.SendAsync("HookMovedTo", player);
+
+            Console.WriteLine($"Player {Context.ConnectionId} hook moved to {positionX} {positionY}");
+        } 
         
         public override async Task OnDisconnectedAsync(Exception exception)
         {

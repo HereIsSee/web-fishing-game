@@ -85,7 +85,20 @@ function App() {
       connection.on("UpdateFishes", (fishes) => {
         // Loop through fishes and update their positions in your canvas/scene
         setFishesData(fishes);
-        console.log("Gotten fishes: ", fishes);
+      });
+
+      connection.on("FishingRodCastChanged", (playerData) => {
+        setPlayersData((prevPlayers) => ({
+          ...prevPlayers,
+          [playerData.connectionId]: playerData,
+        }));
+      });
+
+      connection.on("HookMovedTo", (playerData) => {
+        setPlayersData((prevPlayers) => ({
+          ...prevPlayers,
+          [playerData.connectionId]: playerData,
+        }));
       });
 
       // Invoke join session on backendd

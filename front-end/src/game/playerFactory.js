@@ -1,4 +1,6 @@
 const playerFactory = (canvasContext, playerData, myConnectionId) => {
+  console.log(playerData);
+
   const drawPlayer = () => {
     // console.log(myConnectionId)
     // console.log(playerData.connectionId)
@@ -22,7 +24,28 @@ const playerFactory = (canvasContext, playerData, myConnectionId) => {
     canvasContext.fill();
   };
 
-  return { drawPlayer };
+  const drawHook = () => {
+    if (!playerData.fishingRod.cast) return;
+    const hookX = playerData.fishingRod.positionX;
+    const hookY = playerData.fishingRod.positionY;
+
+    canvasContext.strokeStyle = "#000000"; // line color for the fishing line
+    canvasContext.lineWidth = 2;
+
+    // Draw line from boat to hook
+    canvasContext.beginPath();
+    canvasContext.moveTo(playerData.boat.positionX, playerData.boat.positionY);
+    canvasContext.lineTo(hookX, hookY);
+    canvasContext.stroke();
+
+    // Draw the hook itself
+    canvasContext.fillStyle = "#ff0000"; // red hook
+    canvasContext.beginPath();
+    canvasContext.arc(hookX, hookY, 5, 0, Math.PI * 2);
+    canvasContext.fill();
+  };
+
+  return { drawPlayer, drawHook };
 };
 
 export default playerFactory;

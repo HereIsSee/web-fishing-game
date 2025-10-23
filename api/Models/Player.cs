@@ -28,5 +28,23 @@ namespace Api.Models
             this.FishingRod = new FishingRod(positionX, positionY);
         }
 
+        public void UpdateBoatPosition(double positionX)
+        {
+            if (this.FishingRod.Cast)
+                return;
+
+            this.Boat.PositionX = positionX;
+            this.FishingRod.PositionX = positionX;
+        }
+        public void ToggleFishingRodCast()
+        {
+            this.FishingRod.Cast = !this.FishingRod.Cast;
+            if(FishingRod.Cast == false)
+            {
+                this.FishingRod.PositionX = this.Boat.PositionX;
+                this.FishingRod.PositionY = this.Boat.PositionY;   
+            }
+        }
+
     }
 }
