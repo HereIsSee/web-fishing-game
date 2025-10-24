@@ -1,4 +1,6 @@
 const fishFactory = (canvasContext, fishData) => {
+  let { id, positionX, positionY, movementSpeed, hasBeenHooked } = fishData;
+
   const drawFish = () => {
     canvasContext.fillStyle = "#d9e25de8";
 
@@ -10,7 +12,7 @@ const fishFactory = (canvasContext, fishData) => {
     canvasContext.fill();
   };
 
-  return { drawFish };
+  return { id, positionX, positionY, drawFish };
 };
 
 export default fishFactory;

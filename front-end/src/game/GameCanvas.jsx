@@ -134,6 +134,17 @@ const GameCanvas = ({
       players.forEach((p) => {
         p.drawPlayer();
         p.drawHook();
+
+        fishes.forEach((f) => {
+          const caughtFishId = p.hasHookedFish(f.id, f.positionX, f.positionY);
+
+          if (caughtFishId !== null) {
+            console.log("Player has caught fish: ", caughtFishId);
+            connection
+              .invoke("CatchFish", caughtFishId)
+              .catch((err) => console.error("Failed to catch fish:", err));
+          }
+        });
       });
 
       ctx.restore();

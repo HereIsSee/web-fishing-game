@@ -84,7 +84,7 @@ namespace Api.Hubs
             await Clients.All.SendAsync("FishingRodCastChanged", player);
 
             Console.WriteLine($"Player {Context.ConnectionId} has toggled his cast");
-        } 
+        }
         public async Task MoveHook(float positionX, float positionY)
         {
             var player = _session.GetPlayer(Context.ConnectionId);
@@ -98,6 +98,14 @@ namespace Api.Hubs
             await Clients.All.SendAsync("HookMovedTo", player);
 
             Console.WriteLine($"Player {Context.ConnectionId} hook moved to {positionX} {positionY}");
+        } 
+        public async Task CatchFish(int fishId)
+        {
+            _session.Environment.DeleteFish(fishId);
+
+            await Clients.All.SendAsync("UpdateFishes", _session.Environment.Fishes);
+
+            Console.WriteLine($"Player {Context.ConnectionId} caught fish {fishId}");
         } 
         
         public override async Task OnDisconnectedAsync(Exception exception)

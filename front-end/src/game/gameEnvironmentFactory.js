@@ -20,7 +20,6 @@ function gameEnvironmentFactory(canvasContext, environmentData) {
   const drawEnvironment = () => {
     drawBackground();
     drawWater();
-    console.log(environmentData);
   };
 
   return { drawEnvironment };

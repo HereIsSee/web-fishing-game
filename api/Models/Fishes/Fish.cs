@@ -8,6 +8,7 @@ namespace Api.Models
     }
     public class Fish
     {
+        private static int _nextId = 1; 
         public int Id { get; set; }
 
         public double PositionX { get; set; }
@@ -25,6 +26,8 @@ namespace Api.Models
 
         public Fish(FishType type, double positionX, double positionY)
         {
+            Id = _nextId++; 
+            
             this.HasBeenHooked = false;
             this.PositionX = positionX;
             this.PositionY = positionY;

@@ -46,16 +46,15 @@ function App() {
       console.log("✅ Connected! ConnectionId: ");
 
       // Subscribe to backend events
-      
 
       connection.on("ReceiveAllPlayers", (allPlayers) => {
         console.log("📥 Received all existing players:", allPlayers);
-        
+
         const playersObj = {};
-        allPlayers.forEach(player => {
+        allPlayers.forEach((player) => {
           playersObj[player.connectionId] = player;
         });
-        
+
         setPlayersData(playersObj);
       });
 
@@ -97,6 +96,7 @@ function App() {
       connection.on("UpdateFishes", (fishes) => {
         // Loop through fishes and update their positions in your canvas/scene
         setFishesData(fishes);
+        // console.log(fishes);
       });
 
       connection.on("FishingRodCastChanged", (playerData) => {

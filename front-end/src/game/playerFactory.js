@@ -1,5 +1,6 @@
 const playerFactory = (canvasContext, playerData, myConnectionId) => {
-  console.log(playerData);
+  // console.log(playerData);
+  let { connectionId, name, boat, fishingRod } = playerData;
 
   const drawPlayer = () => {
     // console.log(myConnectionId)
@@ -45,7 +46,22 @@ const playerFactory = (canvasContext, playerData, myConnectionId) => {
     canvasContext.fill();
   };
 
-  return { drawPlayer, drawHook };
+  const hasHookedFish = (fishId, fishPositionX, fishPositionY) => {
+    const hookX = playerData.fishingRod.positionX;
+    const hookY = playerData.fishingRod.positionY;
+
+    if (
+      hookX - 5 < fishPositionX &&
+      hookX + 5 > fishPositionX &&
+      hookY - 5 < fishPositionY &&
+      hookY + 5 > fishPositionY
+    ) {
+      return fishId;
+    }
+    return null;
+  };
+
+  return { drawPlayer, drawHook, hasHookedFish };
 };
 
 export default playerFactory;

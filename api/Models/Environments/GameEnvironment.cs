@@ -62,5 +62,9 @@ namespace Api.Models
             }
         }
 
+        public void DeleteFish(int fishId)
+        {
+            Fishes.RemoveAll(f => f.Id == fishId);
+        }
     }
 }
