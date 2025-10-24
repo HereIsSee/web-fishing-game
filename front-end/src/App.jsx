@@ -46,9 +46,21 @@ function App() {
       console.log("✅ Connected! ConnectionId: ");
 
       // Subscribe to backend events
+      
+
+      connection.on("ReceiveAllPlayers", (allPlayers) => {
+        console.log("📥 Received all existing players:", allPlayers);
+        
+        const playersObj = {};
+        allPlayers.forEach(player => {
+          playersObj[player.connectionId] = player;
+        });
+        
+        setPlayersData(playersObj);
+      });
+
       connection.on("PlayerJoined", (playerData) => {
         console.log("🎉 Player joined:", playerData);
-
         setPlayersData((prevPlayers) => ({
           ...prevPlayers,
           [playerData.connectionId]: playerData,

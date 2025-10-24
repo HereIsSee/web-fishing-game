@@ -38,6 +38,11 @@ namespace Api.Models
         {
             return Players[connectionId];
         }
+
+        public List<Player> GetAllPlayers()
+        {
+            return Players.Values.ToList();
+        }
         public void UpdatePlayerPosition(string connectionId, double PositionX)
         {
             var player = Players[connectionId];
