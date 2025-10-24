@@ -24,11 +24,15 @@ namespace Api.Hubs
 
             var player = _session.GetPlayer(Context.ConnectionId);
 
+            var allPlayers = _session.GetAllPlayers();
+            await Clients.Caller.SendAsync("ReceiveAllPlayers", allPlayers);
+
             await Clients.All.SendAsync("PlayerJoined", player);
             await Clients.Caller.SendAsync("ReceiveConnectionId", Context.ConnectionId);
 
             Console.WriteLine($"✅ Player {playerName} joined!");
             Console.WriteLine($"Player {Context.ConnectionId} connection id!");
+            Console.WriteLine($"📊 Sent {allPlayers.Count} existing players to new player");
 
             Console.WriteLine(_session.IsActive);
             if (!_session.IsActive)
