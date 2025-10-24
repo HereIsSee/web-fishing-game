@@ -60,6 +60,12 @@ namespace Api.Models
             {
                 fish.UpdatePosition(Width, WaterLevelHeight);
             }
+
+             if (Fishes.Count <= 20)
+            {
+                int newFishCount = random.Next(5, 16);
+                GenerateRandomFishes(newFishCount);
+            }
         }
 
         public void DeleteFish(int fishId)
