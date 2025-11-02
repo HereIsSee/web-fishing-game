@@ -16,7 +16,9 @@ namespace Api.Models
         public GameState State { get; set; } = GameState.Waiting;
         public int TimerDuration { get; set; } = 300;
 
-        public Session()
+        private static readonly Lazy<Session> _instance = new Lazy<Session>(() => new Session());
+        public static Session Instance => _instance.Value;
+        private Session()
         {
 
             this.StartTime = DateTime.UtcNow;
