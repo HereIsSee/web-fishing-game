@@ -5,7 +5,7 @@ namespace Api.Hubs
 {
     public class GameHub : Hub
     {
-        private static Session _session = new Session(); // Visada yra
+        private static Session _session = Session.Instance;
         private readonly IHubContext<GameHub> _hubContext;
         private readonly ILogger<GameHub> _logger;
 
