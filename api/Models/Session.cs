@@ -20,9 +20,10 @@ namespace Api.Models
         public static Session Instance => _instance.Value;
         private Session()
         {
+            GameEnvironmentFactory factory = new BasicEnvironmentFactory();
 
             this.StartTime = DateTime.UtcNow;
-            this.Environment = new GameEnvironment(800, 600, 500, 30, 10);
+            this.Environment = factory.getEnvironment();
             this.IsActive = false;
         }
 
