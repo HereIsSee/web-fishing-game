@@ -109,12 +109,18 @@ namespace Api.Hubs
 
             if (fish != null && player != null)
             {
-                player.Score += fish.Points;
-                _session.Environment.DeleteFish(fishId);
+                if (fish.Type == FishType.BombFish) 
+                {
+                    new ResetScoreCommand().Execute(player);  // COMMAND PATTERN
+                }
+                else 
+                {
+                    player.Score += fish.Points;  // NORMAL FISH
+                }
 
+                _session.Environment.DeleteFish(fishId);
                 await Clients.All.SendAsync("UpdateFishes", _session.Environment.Fishes);
                 await SendScoreboardUpdate();
-
             }
         }
         public async Task SendScoreboardUpdate()
