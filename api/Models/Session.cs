@@ -1,4 +1,6 @@
 using System.Collections.Concurrent;
+using System.Security.Principal;
+using Api.Hubs;
 
 namespace Api.Models
 {
@@ -25,6 +27,25 @@ namespace Api.Models
             this.StartTime = DateTime.UtcNow;
             this.Environment = factory.getEnvironment();
             this.IsActive = false;
+
+            this.Scoreboard = new Scoreboard();
+            this.Attach(this.Scoreboard);
+        }
+
+        private List<Observer> _observers = new List<Observer>();
+
+        public void Attach(Observer observer) {
+            _observers.Add(observer);
+        }
+
+        public void Detach(Observer observer) {
+            _observers.Remove(observer);
+        }
+
+        private void Notify() {
+            foreach (var observer in _observers) {
+                observer.Update(this);
+            }
         }
 
         public void AddPlayer(string connectionId, string playerName)
@@ -35,6 +56,7 @@ namespace Api.Models
             Players[connectionId] = new Player(
                 connectionId, playerName, positionX, 500.0
             );
+            Notify();
         }
 
         public Player GetPlayer(string connectionId)
@@ -58,12 +80,14 @@ namespace Api.Models
         public void RemovePlayer(string connectionId)
         {
             Players.TryRemove(connectionId, out _);
+            Notify();
         }
 
         public void StartGame()
         {
             State = GameState.Playing;
             IsActive = true;
+            Notify();
             // Čia galima inicijuoti Game objektą jei reikia
         }
 
@@ -72,6 +96,7 @@ namespace Api.Models
             State = GameState.Finished;
             EndTime = DateTime.UtcNow;
             IsActive = false;
+            Notify();
         }
 
         // PRIDĖTI: Surasti laimėtoją
@@ -79,6 +104,8 @@ namespace Api.Models
         {
             return Players.Values.OrderByDescending(p => p.Score).FirstOrDefault();
         }
+
+        
     }
 
     // PRIDĖTI: Enum būsenoms

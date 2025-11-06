@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import * as signalR from "@microsoft/signalr";
 import "./App.css";
 import GameCanvas from "./game/GameCanvas";
+import Scoreboard from "./game/Scoreboard.jsx";
 import {
   // playersData,
   // fishesData,
@@ -20,6 +21,7 @@ function App() {
   // ----- events or player's own inputs movements
   const [playersData, setPlayersData] = useState({});
   const [fishesData, setFishesData] = useState([]);
+  const [scoreboardData, setScoreboardData] = useState(null);
   // const [gameEnvironmentData, setGameEnvironmentData] = useState({});
   // const [obstaclesData, setObstaclesData] = useState([]);
   // -------------------------------------------------------------------------
@@ -113,6 +115,12 @@ function App() {
         }));
       });
 
+      connection.on("ScoreboardUpdated", (data) => {
+        console.log("🟢 SCOREBOARD DATA RECEIVED:", data);
+        setScoreboardData(data);
+      });
+
+
       // Invoke join session on backendd
       await connection.invoke("JoinSession", playerName);
       console.log("✅ JoinSession called!");
@@ -140,6 +148,7 @@ function App() {
       ) : (
         <div>
           <h1>Got here</h1>
+          <Scoreboard scoreboardData={scoreboardData} />
           <GameCanvas
             myConnectionId={myConnectionId}
             connection={connection}

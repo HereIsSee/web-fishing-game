@@ -1,0 +1,37 @@
+.scoreboard {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 15px;
+  border-radius: 10px;
+  font-family: Arial, sans-serif;
+  min-width: 200px;
+}
+
+.scoreboard h3 {
+  margin: 0 0 10px 0;
+  text-align: center;
+}
+
+.game-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+
+.scores {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.player-score {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+}

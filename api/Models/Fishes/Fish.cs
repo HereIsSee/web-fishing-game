@@ -19,6 +19,8 @@ namespace Api.Models
 
         public bool HasBeenHooked { get; set; } = false;
 
+        public int Points { get; set; }
+
         private double DirectionX { get; set; }
         private double DirectionY { get; set; }
         private int FramesUntilDirectionChange { get; set; }
@@ -36,15 +38,19 @@ namespace Api.Models
             {
                 case FishType.BasicFish:
                     MovementSpeed = 5.0;
+                    Points = 10;
                     break;
                 case FishType.RedFish:
                     MovementSpeed = 10.0;
+                    Points = 20;
                     break;
                 case FishType.GoldenFish:
                     MovementSpeed = 15.0;
+                    Points = 50;
                     break;
                 default:
                     MovementSpeed = 2.0;
+                    Points = 5;
                     break;
             }
 

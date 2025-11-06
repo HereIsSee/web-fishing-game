@@ -40,11 +40,13 @@ namespace Api.Hubs
                 Console.WriteLine("irst player joined — starting game automatically!");
                 await StartGame();
             }
+            await SendScoreboardUpdate();
         }
         public async Task LeaveSession()
         {
             _session.RemovePlayer(Context.ConnectionId);
             await Clients.All.SendAsync("PlayerLeft", Context.ConnectionId);
+            await SendScoreboardUpdate();
         }
 
         public async Task StartGame()
@@ -62,6 +64,7 @@ namespace Api.Hubs
                 }
 
             });
+            await SendScoreboardUpdate();
         }
 
         public async Task MoveBoatTo(float positionX)
@@ -72,7 +75,7 @@ namespace Api.Hubs
 
             await Clients.All.SendAsync("BoatMovedTo", player);
 
-            Console.WriteLine($"Player {Context.ConnectionId} moved to {positionX}");
+            //Console.WriteLine($"Player {Context.ConnectionId} moved to {positionX}");
         }
         public async Task ToggleFishingRodCast()
         {
@@ -98,15 +101,33 @@ namespace Api.Hubs
             await Clients.All.SendAsync("HookMovedTo", player);
 
             Console.WriteLine($"Player {Context.ConnectionId} hook moved to {positionX} {positionY}");
-        } 
+        }
         public async Task CatchFish(int fishId)
         {
-            _session.Environment.DeleteFish(fishId);
+            var player = _session.GetPlayer(Context.ConnectionId);
+            var fish = _session.Environment.Fishes.FirstOrDefault(f => f.Id == fishId);
 
-            await Clients.All.SendAsync("UpdateFishes", _session.Environment.Fishes);
+            if (fish != null && player != null)
+            {
+                player.Score += fish.Points;
+                _session.Environment.DeleteFish(fishId);
 
-            Console.WriteLine($"Player {Context.ConnectionId} caught fish {fishId}");
-        } 
+                await Clients.All.SendAsync("UpdateFishes", _session.Environment.Fishes);
+                await SendScoreboardUpdate();
+
+            }
+        }
+        public async Task SendScoreboardUpdate()
+        {
+            var session = Session.Instance;
+            var scoreboardData = new {
+                playerScores = session.Players.ToDictionary(p => p.Value.Name, p => p.Value.Score),
+                currentGameState = session.State.ToString(),
+                remainingTime = session.TimerDuration
+            };
+            
+            await Clients.All.SendAsync("ScoreboardUpdated", scoreboardData);
+        }
         
         public override async Task OnDisconnectedAsync(Exception exception)
         {
