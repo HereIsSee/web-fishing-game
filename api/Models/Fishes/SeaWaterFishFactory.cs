@@ -14,5 +14,9 @@ namespace Api.Models
         {
             return new YellowFish(x, y);
         }
+        public override Fish CreateDangerFish(double x, double y)
+        {
+            return new BombFish(x, y);
+        }
     }
 }

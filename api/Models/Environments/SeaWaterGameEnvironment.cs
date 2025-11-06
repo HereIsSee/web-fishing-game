@@ -44,9 +44,10 @@ namespace Api.Models
                 int roll = random.Next(100);
                 Fish fish = roll switch
                 {
-                    < 60 => fishFactory.CreateCommonFish(x, y),
-                    < 90 => fishFactory.CreateRareFish(x, y),
-                    _ => fishFactory.CreateLegendaryFish(x, y)
+                    < 50 => fishFactory.CreateCommonFish(x, y),
+                    < 80 => fishFactory.CreateRareFish(x, y),
+                    < 90 => fishFactory.CreateLegendaryFish(x, y),
+                    _ => fishFactory.CreateDangerFish(x, y)
                 };
 
                 Fishes.Add(fish);

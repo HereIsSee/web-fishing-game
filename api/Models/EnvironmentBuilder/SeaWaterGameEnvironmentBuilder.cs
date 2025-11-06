@@ -24,12 +24,14 @@ namespace Api.Models
                 int roll = _random.Next(100);
 
                 Fish fish;
-                if (roll < 60)
+                if (roll < 50)
                     fish = fishFactory.CreateCommonFish(x, y);
-                else if (roll < 90)
+                else if (roll < 80)
                     fish = fishFactory.CreateRareFish(x, y);
-                else
+                else if (roll < 90)
                     fish = fishFactory.CreateLegendaryFish(x, y);
+                else
+                    fish = fishFactory.CreateDangerFish(x, y);
 
                 _gameEnvironment.Fishes.Add(fish);
             }

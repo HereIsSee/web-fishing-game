@@ -109,7 +109,7 @@ namespace Api.Hubs
 
             if (fish != null && player != null)
             {
-                if (fish.Type == FishType.BombFish) 
+                if (fish is BombFish) 
                 {
                     new ResetScoreCommand().Execute(player);  // COMMAND PATTERN
                 }
