@@ -22,7 +22,7 @@ namespace Api.Models
         public static Session Instance => _instance.Value;
         private Session()
         {
-            GameEnvironmentFactory factory = new BasicEnvironmentFactory();
+            GameEnvironmentFactory factory = new SeaWaterEnvironmentFactory();
 
             this.StartTime = DateTime.UtcNow;
             this.Environment = factory.getEnvironment();

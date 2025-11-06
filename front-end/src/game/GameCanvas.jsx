@@ -136,7 +136,12 @@ const GameCanvas = ({
         p.drawHook();
 
         fishes.forEach((f) => {
-          const caughtFishId = p.hasHookedFish(f.id, f.positionX, f.positionY);
+          const caughtFishId = p.hasHookedFish(
+            f.id,
+            f.positionX,
+            f.positionY,
+            f.radius
+          );
 
           if (caughtFishId !== null) {
             console.log("Player has caught fish: ", caughtFishId);

@@ -10,11 +10,9 @@ namespace Api.Models
         public int WaterLevelHeight { get; set; }
         public List<Fish> Fishes { get; set; } = new();
         public List<Obstacle> Obstacles { get; set; } = new();
+        public string WaterColor { get; set; } = null!;
+        public string SkyColor { get; set; } = null!;
         
-        public abstract void GenerateRandomFishes(int count);
-
-        public abstract void GenerateRandomObstacles(int count);
-
         public abstract void Update();
 
         public abstract void DeleteFish(int fishId);

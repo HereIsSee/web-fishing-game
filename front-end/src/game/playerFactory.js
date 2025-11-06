@@ -1,6 +1,7 @@
 const playerFactory = (canvasContext, playerData, myConnectionId) => {
   // console.log(playerData);
   let { connectionId, name, boat, fishingRod } = playerData;
+  const hookRadius = 5;
 
   const drawPlayer = () => {
     // console.log(myConnectionId)
@@ -42,22 +43,24 @@ const playerFactory = (canvasContext, playerData, myConnectionId) => {
     // Draw the hook itself
     canvasContext.fillStyle = "#ff0000"; // red hook
     canvasContext.beginPath();
-    canvasContext.arc(hookX, hookY, 5, 0, Math.PI * 2);
+    canvasContext.arc(hookX, hookY, hookRadius, 0, Math.PI * 2);
     canvasContext.fill();
   };
 
-  const hasHookedFish = (fishId, fishPositionX, fishPositionY) => {
+  const hasHookedFish = (fishId, fishX, fishY, fishRadius) => {
+    if (!playerData.fishingRod.cast) return null;
+
     const hookX = playerData.fishingRod.positionX;
     const hookY = playerData.fishingRod.positionY;
 
-    if (
-      hookX - 5 < fishPositionX &&
-      hookX + 5 > fishPositionX &&
-      hookY - 5 < fishPositionY &&
-      hookY + 5 > fishPositionY
-    ) {
+    const dx = hookX - fishX;
+    const dy = hookY - fishY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    if (distance <= hookRadius + fishRadius) {
       return fishId;
     }
+
     return null;
   };
 
