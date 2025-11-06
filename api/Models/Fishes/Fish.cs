@@ -4,7 +4,8 @@ namespace Api.Models
     {
         BasicFish,
         RedFish,
-        GoldenFish //Can add other fish types
+        GoldenFish,
+        BombFish
     }
     public class Fish
     {
@@ -20,6 +21,7 @@ namespace Api.Models
         public bool HasBeenHooked { get; set; } = false;
 
         public int Points { get; set; }
+        public FishType Type { get; set; }
 
         private double DirectionX { get; set; }
         private double DirectionY { get; set; }
@@ -28,6 +30,7 @@ namespace Api.Models
 
         public Fish(FishType type, double positionX, double positionY)
         {
+            this.Type = type;
             Id = _nextId++; 
             
             this.HasBeenHooked = false;
@@ -46,6 +49,10 @@ namespace Api.Models
                     break;
                 case FishType.GoldenFish:
                     MovementSpeed = 15.0;
+                    Points = 50;
+                    break;
+                case FishType.BombFish:
+                    MovementSpeed = 0.0;
                     Points = 50;
                     break;
                 default:
