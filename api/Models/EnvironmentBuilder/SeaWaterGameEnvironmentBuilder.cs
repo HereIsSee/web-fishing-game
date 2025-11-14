@@ -1,5 +1,6 @@
 using Api.Models.Prototype;
 using Api.Models.Decorator;
+using Api.Models.Facade;
 
 namespace Api.Models
 {
@@ -7,6 +8,7 @@ namespace Api.Models
     {
         private static readonly Random _random = new Random();
         public GameEnvironment _gameEnvironment = null!;
+        private readonly GameFacade _gameFacade = new GameFacade();
         public IEnvironmentBuilder StartNew(GameEnvironment env)
         {
             _gameEnvironment = env;
@@ -50,6 +52,23 @@ namespace Api.Models
                     var template = fishFactory.CreateDangerFish(x, y);
                     fish = template;
                 }
+                if (i % 5 == 0)
+                {
+                    int prototypeType = i % 5;
+                    FishPrototype clonedProto;
+                    if (prototypeType == 0)
+                        clonedProto = bluePrototype.CloneShallow();
+                    else if (prototypeType == 1)
+                        clonedProto = yellowPrototype.CloneDeep();
+                    else if (prototypeType == 2)
+                        clonedProto = blackPrototype.CloneShallow();
+                    else if (prototypeType == 3)
+                        clonedProto = bombPrototype.CloneDeep();
+                    else
+                        clonedProto = fatPrototype.CloneShallow();
+                    
+                    Console.WriteLine($"Cloned prototype: {clonedProto.GetType().Name} at ({clonedProto.PositionX}, {clonedProto.PositionY})");
+                }
 
                 int decoratorRoll = _random.Next(100);
                 if (decoratorRoll < 80)
@@ -65,6 +84,7 @@ namespace Api.Models
                     fish.Decorator = new PoisonedFishDecorator();
                 }
 
+                _gameFacade.RenderFrame(new Player("system", "Environment", x, y));
                 _gameEnvironment.Fishes.Add(fish);
             }
 

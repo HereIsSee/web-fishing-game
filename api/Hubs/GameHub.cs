@@ -1,4 +1,5 @@
 using Api.Models;
+using Api.Models.Facade;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Api.Hubs
@@ -8,6 +9,7 @@ namespace Api.Hubs
         private static Session _session = Session.Instance;
         private readonly IHubContext<GameHub> _hubContext;
         private readonly ILogger<GameHub> _logger;
+        private readonly GameFacade _gameFacade = new GameFacade();
 
         public GameHub(IHubContext<GameHub> hubContext, ILogger<GameHub> logger)
         {
@@ -30,6 +32,8 @@ namespace Api.Hubs
             await Clients.All.SendAsync("PlayerJoined", player);
             await Clients.Caller.SendAsync("ReceiveConnectionId", Context.ConnectionId);
 
+            _gameFacade.RenderAllPlayers(allPlayers);
+
             Console.WriteLine($"✅ Player {playerName} joined!");
             Console.WriteLine($"Player {Context.ConnectionId} connection id!");
             Console.WriteLine($"📊 Sent {allPlayers.Count} existing players to new player");
@@ -37,7 +41,7 @@ namespace Api.Hubs
             Console.WriteLine(_session.IsActive);
             if (!_session.IsActive)
             {
-                Console.WriteLine("irst player joined — starting game automatically!");
+                Console.WriteLine("First player joined — starting game automatically!");
                 await StartGame();
             }
             await SendScoreboardUpdate();
@@ -52,6 +56,7 @@ namespace Api.Hubs
         public async Task StartGame()
         {
             _session.StartGame();
+            _gameFacade.InitializeGame();
             await Clients.All.SendAsync("GameStarted", _session.TimerDuration);
             _ = Task.Run(async () =>
             {
@@ -68,6 +73,8 @@ namespace Api.Hubs
                         {
                             Console.WriteLine("⏰ Game time expired! Ending game...");
                             _session.EndGame();
+                            _gameFacade.PlayGameOverSound();
+                            _gameFacade.RenderAllPlayers(_session.GetAllPlayers());
                             await _hubContext.Clients.All.SendAsync("GameEnded", new {
                                 winner = _session.GetWinner()?.Name,
                                 playerScores = _session.Players.ToDictionary(p => p.Value.Name, p => p.Value.Score)
@@ -125,56 +132,57 @@ namespace Api.Hubs
 
             if (fish != null && player != null)
             {
-                Random random = new Random();
-                double escapeChance = fish.Behavior?.GetEscapeProbability() ?? 0.5; // Default 50% if no behavior
-                
-                if (random.NextDouble() < escapeChance)
+                // Use Facade to handle fish catch logic
+                bool caught = _gameFacade.AttemptFishCatch(player, fish);
+
+                if (!caught)
                 {
+                    double escapeChance = fish.Behavior?.GetEscapeProbability() ?? 0.5;
                     Console.WriteLine($"🐟 Fish {fishId} escaped! ({escapeChance * 100}% escape probability)");
+                    // Send miss sound to frontend
+                    await Clients.All.SendAsync("PlaySound", "miss");
                 }
                 else
                 {
                     var decorator = fish.Decorator;
-                    
                     if (decorator != null)
                     {
+                        _gameFacade.ApplyEffect(player, decorator);
+                        // Send catch sound for decorated fish
+                        await Clients.All.SendAsync("PlaySound", "catch");
+
                         if (decorator.CausesFreeze())
                         {
                             double penalty = decorator.GetPointsPenalty();
                             int deductedPoints = (int)Math.Round(fish.Points * penalty);
-                            player.Score -= deductedPoints;
-                            if (player.Score < 0) player.Score = 0;
                             player.IsFrozen = true;
                             player.FreezeEndTime = DateTime.UtcNow.AddSeconds(decorator.GetFreezeDurationSeconds());
                             Console.WriteLine($"Poisoned fish caught! -{deductedPoints} points, hook frozen for {decorator.GetFreezeDurationSeconds()}s");
+                            // Send freeze sound
+                            await Clients.All.SendAsync("PlaySound", "freeze");
                         }
                         else if (decorator.GetSlowdownPercentage() > 0)
                         {
-                            double multiplier = decorator.GetPointsMultiplier();
-                            int decoratedPoints = (int)Math.Round(fish.Points * multiplier);
-                            player.Score += decoratedPoints;
                             player.IsSlowed = true;
                             player.SlowdownEndTime = DateTime.UtcNow.AddSeconds(decorator.GetSlowdownDurationSeconds());
-                            Console.WriteLine($"Weighted fish caught! +{decoratedPoints} points ({multiplier}x), slowed for {decorator.GetSlowdownDurationSeconds()}s");
+                            Console.WriteLine($"Weighted fish caught! Slowed for {decorator.GetSlowdownDurationSeconds()}s");
                         }
                         else
                         {
                             if (fish is BombFish)
                             {
-                                new ResetScoreCommand().Execute(player);  
+                                new ResetScoreCommand().Execute(player);
                                 Console.WriteLine($"💣 BombFish caught! Score reset!");
-                            }
-                            else
-                            {
-                                player.Score += fish.Points;
-                                Console.WriteLine($"✅ Normal fish caught! +{fish.Points} points");
+                                // Send bomb sound
+                                await Clients.All.SendAsync("PlaySound", "bomb");
                             }
                         }
                     }
                     else
                     {
-                        player.Score += fish.Points;
                         Console.WriteLine($"✅ Fish caught! +{fish.Points} points");
+                        // Send normal catch sound
+                        await Clients.All.SendAsync("PlaySound", "catch");
                     }
                 }
 
@@ -217,12 +225,15 @@ namespace Api.Hubs
             _session.EndTime = null;
             GameEnvironmentFactory factory = new SeaWaterEnvironmentFactory();
             _session.Environment = factory.getEnvironment();
+            _gameFacade.PlaySuccessSound();
+            _gameFacade.InitializeGame();
+            
             await Clients.All.SendAsync("GameReset");
             await SendScoreboardUpdate();
             Console.WriteLine("✅ Game reset complete!");
         }
         
-        public override async Task OnDisconnectedAsync(Exception exception)
+        public override async Task OnDisconnectedAsync(Exception? exception)
         {
             _session.RemovePlayer(Context.ConnectionId);
             await Clients.Others.SendAsync("PlayerLeft", Context.ConnectionId);
