@@ -4,12 +4,80 @@ import "./App.css";
 import GameCanvas from "./game/GameCanvas";
 import SplashScreen from "./game/SplashScreen";
 import Scoreboard from "./game/Scoreboard.jsx";
+import { playSynthSound } from "./game/audioGenerator.js";
 import {
   // playersData,
   // fishesData,
   gameEnvironmentData,
   obstaclesData,
 } from "./game/dummyData.js";
+
+const useAudioManager = () => {
+  const audioContextRef = useRef(null);
+  const audioBuffersRef = useRef({});
+
+  const initAudioContext = () => {
+    if (!audioContextRef.current) {
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        audioContextRef.current = audioContext;
+        console.log(" Audio context initialized");
+      } catch (e) {
+        console.error(" Audio context failed:", e);
+      }
+    }
+    return audioContextRef.current;
+  };
+
+  const playSound = async (soundType) => {
+    const audioContext = initAudioContext();
+    if (!audioContext) return;
+
+    try {
+      const soundMap = {
+        catch: "/sounds/catch.wav",
+        miss: "/sounds/miss.wav",
+        freeze: "/sounds/freeze.wav",
+        bomb: "/sounds/bomb.wav",
+      };
+
+      const soundPath = soundMap[soundType];
+      if (!soundPath) {
+        console.warn(`⚠️ Unknown sound type: ${soundType}`);
+        return;
+      }
+
+      try {
+        if (!audioBuffersRef.current[soundType]) {
+          const response = await fetch(soundPath);
+          if (!response.ok) throw new Error(`Failed to load ${soundPath}`);
+          const arrayBuffer = await response.arrayBuffer();
+          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+          audioBuffersRef.current[soundType] = audioBuffer;
+        }
+
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffersRef.current[soundType];
+        source.connect(audioContext.destination);
+        source.start(0);
+        console.log(` Playing file-based sound: ${soundType}`);
+      } catch (fileError) {
+        console.log(` File load failed, using synthesized ${soundType} sound`);
+        playSynthSound(audioContext, soundType);
+      }
+    } catch (e) {
+      console.error(` Error playing sound ${soundType}:`, e);
+      try {
+        const audioContext = initAudioContext();
+        if (audioContext) playSynthSound(audioContext, soundType);
+      } catch (synthError) {
+        console.error(` Synth fallback also failed:`, synthError);
+      }
+    }
+  };
+
+  return { playSound, initAudioContext };
+};
 
 function App() {
   const [playerName, setPlayerName] = useState("");
@@ -28,6 +96,8 @@ function App() {
   // only when a real PlayerJoined event happened. This prevents routine
   // scoreboard updates (e.g., fish caught) from resetting the countdown.
   const allowTimerResetRef = useRef(false);
+
+  const { playSound, initAudioContext } = useAudioManager();
 
   // If two or more players have joined and the scoreboard isn't running yet,
   // start a local countdown as a client-side fallback (60 seconds).
@@ -222,6 +292,11 @@ function App() {
           console.error("Error handling ScoreboardUpdated:", e);
           setScoreboardData(data);
         }
+      });
+
+      connection.on("PlaySound", (soundType) => {
+        console.log(`Received PlaySound event: ${soundType}`);
+        playSound(soundType);
       });
 
       connection.on("GameEnded", (result) => {
