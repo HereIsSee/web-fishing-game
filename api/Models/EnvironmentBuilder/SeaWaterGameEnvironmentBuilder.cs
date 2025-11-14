@@ -1,3 +1,6 @@
+using Api.Models.Prototype;
+using Api.Models.Decorator;
+
 namespace Api.Models
 {
     public class SeaWaterGameEnvironmentBuilder : IEnvironmentBuilder
@@ -14,7 +17,11 @@ namespace Api.Models
         {
             FishAbstractFactory fishFactory = new SeatWaterFishFactory();
             int fishCount = _random.Next(20, 36);
-            
+            FishPrototype bluePrototype = new BlueFishShallow();
+            FishPrototype yellowPrototype = new YellowFishShallow();
+            FishPrototype blackPrototype = new BlackFishShallow();
+            FishPrototype bombPrototype = new BombFishShallow();
+            FishPrototype fatPrototype = new FatFishShallow();
 
             for (int i = 0; i < fishCount; i++)
             {
@@ -22,16 +29,41 @@ namespace Api.Models
                 double y = _random.NextDouble() * _gameEnvironment.WaterLevelHeight;
 
                 int roll = _random.Next(100);
-
                 Fish fish;
                 if (roll < 50)
-                    fish = fishFactory.CreateCommonFish(x, y);
+                {
+                    var template = fishFactory.CreateCommonFish(x, y);
+                    fish = template;
+                }
                 else if (roll < 80)
-                    fish = fishFactory.CreateRareFish(x, y);
+                {
+                    var template = fishFactory.CreateRareFish(x, y);
+                    fish = template;
+                }
                 else if (roll < 90)
-                    fish = fishFactory.CreateLegendaryFish(x, y);
+                {
+                    var template = fishFactory.CreateLegendaryFish(x, y);
+                    fish = template;
+                }
                 else
-                    fish = fishFactory.CreateDangerFish(x, y);
+                {
+                    var template = fishFactory.CreateDangerFish(x, y);
+                    fish = template;
+                }
+
+                int decoratorRoll = _random.Next(100);
+                if (decoratorRoll < 80)
+                {
+                    fish.Decorator = new NormalFishDecorator();
+                }
+                else if (decoratorRoll < 90)
+                {
+                    fish.Decorator = new WeightedFishDecorator();
+                }
+                else
+                {
+                    fish.Decorator = new PoisonedFishDecorator();
+                }
 
                 _gameEnvironment.Fishes.Add(fish);
             }

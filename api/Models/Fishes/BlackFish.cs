@@ -1,5 +1,7 @@
 namespace Api.Models
 {
+    using Api.Models.Bridge;
+
     public class BlackFish : Fish
     {
         public BlackFish(double x, double y) : base(x, y)
@@ -9,8 +11,9 @@ namespace Api.Models
             this.Radius = 15.0;
             this.Color = "#000000";
             this.FishMove = new RandomMove();
-
+            this.Behavior = new PassiveBehavior();
         }
+
         public override void UpdatePosition(int environmentWidth, int waterLevelHeight)
         {
             this.FishMove.Move(this, environmentWidth, waterLevelHeight);

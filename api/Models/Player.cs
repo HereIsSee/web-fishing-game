@@ -18,6 +18,14 @@ namespace Api.Models
         // Player has a fishing rod
         public FishingRod FishingRod { get; set; } = null!;
 
+        // Decorator Pattern: Freeze effect from poisoned fish
+        public bool IsFrozen { get; set; } = false;
+        public DateTime? FreezeEndTime { get; set; } = null;
+
+        // Decorator Pattern: Slowdown effect from weighted fish
+        public bool IsSlowed { get; set; } = false;
+        public DateTime? SlowdownEndTime { get; set; } = null;
+
         public Player(string connectionId, string name, double positionX, double positionY)
         {
             this.ConnectionId = connectionId;
