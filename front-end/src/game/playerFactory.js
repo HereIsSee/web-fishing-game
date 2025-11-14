@@ -4,9 +4,6 @@ const playerFactory = (canvasContext, playerData, myConnectionId) => {
   const hookRadius = 5;
 
   const drawPlayer = () => {
-    // console.log(myConnectionId)
-    // console.log(playerData.connectionId)
-
     playerData.connectionId === myConnectionId
       ? (canvasContext.fillStyle = "#472020")
       : (canvasContext.fillStyle = "#a10909ff");
@@ -14,41 +11,65 @@ const playerFactory = (canvasContext, playerData, myConnectionId) => {
     const x = playerData.boat.positionX;
     const y = playerData.boat.positionY;
 
-    // console.log(x, y);
-
     canvasContext.beginPath();
     canvasContext.moveTo(x, y);
     canvasContext.lineTo(x - 20, y);
     canvasContext.lineTo(x - 30, y + 20);
     canvasContext.lineTo(x + 30, y + 20);
     canvasContext.lineTo(x + 20, y);
-
     canvasContext.fill();
+
+    try {
+      if (playerData.connectionId === myConnectionId) {
+        canvasContext.save();
+        canvasContext.strokeStyle = "#FFD700"; 
+        canvasContext.lineWidth = 3;
+        canvasContext.strokeRect(x - 35, y - 5, 70, 30);
+        canvasContext.restore();
+      }
+    } catch (e) {}
+
+    try {
+      const boatHeight = 20; 
+      const nameX = x; 
+      const nameGameY = y + boatHeight + 6; 
+      const pixelX = nameX;
+      const pixelY = canvasContext.canvas.height - nameGameY - 8;
+
+      canvasContext.save();
+      canvasContext.setTransform(1, 0, 0, 1, 0, 0);
+      canvasContext.fillStyle = "#000000";
+      canvasContext.font = "14px sans-serif";
+      canvasContext.textAlign = "center";
+      canvasContext.fillText(name || "Unknown", pixelX, pixelY);
+      canvasContext.restore();
+    } catch (e) {
+    }
   };
 
   const drawHook = () => {
-    if (!playerData.fishingRod.cast) return;
+    if (!playerData.fishingRod?.cast) return;
     const hookX = playerData.fishingRod.positionX;
     const hookY = playerData.fishingRod.positionY;
 
-    canvasContext.strokeStyle = "#000000"; // line color for the fishing line
+    canvasContext.strokeStyle = "#000000"; 
     canvasContext.lineWidth = 2;
 
-    // Draw line from boat to hook
+    const boatX = playerData.boat.positionX;
+    const boatY = playerData.boat.positionY;
     canvasContext.beginPath();
-    canvasContext.moveTo(playerData.boat.positionX, playerData.boat.positionY);
+    canvasContext.moveTo(boatX, boatY);
     canvasContext.lineTo(hookX, hookY);
     canvasContext.stroke();
 
-    // Draw the hook itself
-    canvasContext.fillStyle = "#ff0000"; // red hook
+    canvasContext.fillStyle = "#ff0000"; 
     canvasContext.beginPath();
     canvasContext.arc(hookX, hookY, hookRadius, 0, Math.PI * 2);
     canvasContext.fill();
   };
 
   const hasHookedFish = (fishId, fishX, fishY, fishRadius) => {
-    if (!playerData.fishingRod.cast) return null;
+    if (!playerData.fishingRod?.cast) return null;
 
     const hookX = playerData.fishingRod.positionX;
     const hookY = playerData.fishingRod.positionY;
@@ -64,7 +85,29 @@ const playerFactory = (canvasContext, playerData, myConnectionId) => {
     return null;
   };
 
-  return { drawPlayer, drawHook, hasHookedFish };
+
+  const drawControlArrow = () => {
+    if (playerData.connectionId !== myConnectionId) return;
+    try {
+      const x = playerData.boat.positionX;
+      const y = playerData.boat.positionY;
+      const height = 20;
+      const pixelX = x;
+      const pixelY = canvasContext.canvas.height - (y + height + 20);
+      canvasContext.save();
+      canvasContext.setTransform(1, 0, 0, 1, 0, 0);
+      canvasContext.fillStyle = "#000000";
+      canvasContext.beginPath();
+      canvasContext.moveTo(pixelX, pixelY);
+      canvasContext.lineTo(pixelX - 8, pixelY + 12);
+      canvasContext.lineTo(pixelX + 8, pixelY + 12);
+      canvasContext.closePath();
+      canvasContext.fill();
+      canvasContext.restore();
+    } catch (e) {}
+  };
+
+  return { drawPlayer, drawHook, hasHookedFish, drawControlArrow };
 };
 
 export default playerFactory;

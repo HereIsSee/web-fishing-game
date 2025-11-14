@@ -1,5 +1,6 @@
 namespace Api.Models
 {
+    using Api.Models.Bridge;
     public abstract class Fish
     {
         private static int _nextId = 1;
@@ -18,7 +19,8 @@ namespace Api.Models
         public double Radius { get; set; }
         public string Color { get; set; } = null!;
         public IFishMove FishMove { get; set; } = null!;
-
+        public IFishBehavior Behavior { get; set; }
+        public Api.Models.Decorator.IFishDecorator Decorator { get; set; } = null!;
         protected Fish(double x, double y)
         {
             lock (_idLock)

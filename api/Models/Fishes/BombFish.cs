@@ -1,5 +1,6 @@
 namespace Api.Models
 {
+    using Api.Models.Bridge;
     public class BombFish : Fish
     {
         public BombFish(double x, double y) : base(x, y)
@@ -9,7 +10,7 @@ namespace Api.Models
             this.Radius = 10.0;
             this.Color = "#880000ff";
             this.FishMove = new RandomMove();
-
+            this.Behavior = new NocturnalBehavior();
         }
         public override void UpdatePosition(int environmentWidth, int waterLevelHeight)
         {
