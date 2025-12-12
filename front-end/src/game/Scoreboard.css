@@ -1,37 +1,164 @@
+/* Scoreboard.css */
 .scoreboard {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: rgba(0, 0, 0, 0.8);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 15px;
+  padding: 1rem;
   border-radius: 10px;
-  font-family: Arial, sans-serif;
-  min-width: 200px;
-}
-
-.scoreboard h3 {
-  margin: 0 0 10px 0;
-  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  margin: 1rem auto;
 }
 
 .game-info {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 10px;
-  font-size: 12px;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
 }
 
-.scores {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+.game-over-banner {
+  text-align: center;
+  padding: 1rem;
+  background: rgba(220, 53, 69, 0.2);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.scores-list {
+  margin-top: 1rem;
 }
 
 .player-score {
   display: flex;
   justify-content: space-between;
-  padding: 5px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  transition: background 0.3s;
+}
+
+.player-score:hover {
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 5px;
+}
+
+.player-name {
+  font-weight: bold;
+}
+
+.score {
+  color: #4caf50;
+  font-weight: bold;
+}
+
+/* 🎣 Fish Collection Styles - ADD THIS TO Scoreboard.css */
+.fish-collection {
+  background: linear-gradient(135deg, #1a237e, #283593);
+  color: white;
+  border-radius: 10px;
+  padding: 1rem;
+  margin: 1rem 0;
+  border: 2px solid #4fc3f7;
+}
+
+.fish-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.toggle-details {
+  font-size: 0.9rem;
+  color: #4fc3f7;
+}
+
+.fish-details {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.fish-stats {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+}
+
+.fish-by-type ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.fish-by-type li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.fish-type {
+  font-weight: 500;
+}
+
+.fish-count {
+  font-weight: bold;
+  color: #4caf50;
+}
+
+.all-fish-list {
+  margin-top: 1rem;
+}
+
+.fish-items {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.fish-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  margin-bottom: 0.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  border-left: 3px solid currentColor;
+}
+
+.fish-number {
+  font-weight: bold;
+  margin-right: 0.5rem;
+}
+
+.fish-points {
+  font-weight: bold;
+  color: #4caf50;
+}
+
+/* Scrollbar for fish items */
+.fish-items::-webkit-scrollbar {
+  width: 6px;
+}
+
+.fish-items::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.fish-items::-webkit-scrollbar-thumb {
+  background: #4fc3f7;
+  border-radius: 3px;
 }

@@ -9,12 +9,14 @@ namespace Api.Models
         // NEW Flyweight constructor
         public BombFish(FishSharedData sharedData, double x, double y) : base(sharedData, x, y)
         {
+            this.Type = "BombFish";
             this.Decorator = new NormalFishDecorator();
         }
 
         // OLD constructor
         public BombFish(double x, double y) : base(x, y)
         {
+            this.Type = "BombFish";
             this.MovementSpeed = 0.0;
             this.Points = 15;
             this.Radius = 10.0;

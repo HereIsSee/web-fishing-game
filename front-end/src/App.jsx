@@ -92,7 +92,7 @@ function App() {
   const [fishesData, setFishesData] = useState([]);
   const [scoreboardData, setScoreboardData] = useState(null);
   const [persistentPlayerId, setPersistentPlayerId] = useState(null);
-
+  const [fishCollection, setFishCollection] = useState(null);
 
   // Small ref used to allow the next ScoreboardUpdated to reset the timer
   // only when a real PlayerJoined event happened. This prevents routine
@@ -370,6 +370,29 @@ function App() {
             currentGameState: "Finished",
             remainingTime: 0
           });
+
+          // 🎣 NEW: Fetch fish collection when game ends
+          if (currentConnection.state === 'Connected') {
+            currentConnection.invoke("ShowPlayerFishCollection");
+          }
+        });
+
+        currentConnection.on("FishCollection", (stats) => {
+          console.log("🎣🎣🎣 YOUR CATCH REPORT 🎣🎣🎣", stats);
+          
+          // SAFE ACCESS - handle null/undefined
+          const total = stats?.TotalCaught ?? 0;
+          console.log(`Total fish caught: ${total}`);
+          
+          setFishCollection(stats);
+          
+          console.log("\n📊 By type:");
+          
+          // FIXED: Add null check before Object.entries
+          const fishByType = stats?.FishByType ?? {};
+          for (const [type, count] of Object.entries(fishByType)) {
+            console.log(`  ${type}: ${count} fish`);
+          }
         });
 
         currentConnection.on("GameReset", () => {
@@ -377,6 +400,7 @@ function App() {
           setPlayersData({});
           setFishesData([]);
           setScoreboardData(null);
+          setFishCollection(null); // ✅ Also reset fish collection
         });
 
         currentConnection.on("ReceivePersistentId", (serverPersistentId) => {
@@ -497,18 +521,29 @@ function App() {
       ) : (
         <div>
           <h1>Got here</h1>
-          <Scoreboard scoreboardData={scoreboardData} />
+          <Scoreboard 
+            scoreboardData={scoreboardData} 
+            fishCollection={fishCollection}
+          />
+          
+          {/* KEEP SPLASHSCREEN BUT PASS fishCollection TO IT */}
           {(scoreboardData && (scoreboardData.currentGameState === 'Ended' || scoreboardData.currentGameState === 'Finished')) ? (
-            <SplashScreen playerScores={scoreboardData.playerScores || {}} onRestart={handlePlayAgain} onClose={() => { /* close splash: clear server state or just hide */ }} />
+            <SplashScreen 
+              playerScores={scoreboardData.playerScores || {}} 
+              onRestart={handlePlayAgain} 
+              onClose={() => {}} 
+              fishCollection={fishCollection}  // ADD THIS
+              connection={connection}  // ADD THIS
+            />
           ) : (
             <GameCanvas
-            myConnectionId={myConnectionId}
-            connection={connection}
-            playersData={playersData}
-            fishesData={fishesData}
-            gameEnvironmentData={gameEnvironmentData}
-            obstaclesData={obstaclesData}
-          />
+              myConnectionId={myConnectionId}
+              connection={connection}
+              playersData={playersData}
+              fishesData={fishesData}
+              gameEnvironmentData={gameEnvironmentData}
+              obstaclesData={obstaclesData}
+            />
           )}
         </div>
       )}

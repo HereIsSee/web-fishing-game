@@ -18,6 +18,8 @@ namespace Api.Models
         public bool HasBeenHooked { get; set; } = false;
 
         // OLD properties (keep for backward compatibility)
+        public string Type { get; protected set; } = string.Empty;
+
         public double MovementSpeed { get; set; }
         public int Points { get; set; }
         public double Radius { get; set; }

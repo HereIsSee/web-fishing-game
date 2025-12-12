@@ -1,8 +1,7 @@
-
 import React, { useEffect, useState, useRef } from "react";
 import "./Scoreboard.css";
 
-const Scoreboard = ({ scoreboardData }) => {
+const Scoreboard = ({ scoreboardData, fishCollection }) => {
   const [now, setNow] = useState(Date.now());
   const rafRef = useRef();
 
@@ -52,10 +51,53 @@ const Scoreboard = ({ scoreboardData }) => {
       </div>
 
       {isEnded && (
-        <div className="game-over-banner">
-          <h2>Game Over</h2>
-          <p>Final scores:</p>
-        </div>
+        <>
+          <div className="game-over-banner">
+            <h2>Game Over</h2>
+            <p>Final scores:</p>
+          </div>
+          
+          {/* 🎣 FISH COLLECTION SECTION - ALWAYS SHOW DETAILS */}
+          {fishCollection && (
+            <div className="fish-collection">
+              <div className="fish-summary">
+                <h4>🎣 Your Catch: {fishCollection.totalCaught} fish</h4>
+              </div>
+              
+              <div className="fish-details">
+                <div className="fish-stats">
+                  <p><strong>Total caught:</strong> {fishCollection.totalCaught}</p>
+                  <p><strong>Unique types:</strong> {fishCollection.uniqueTypes}</p>
+                </div>
+                
+                <div className="fish-by-type">
+                  <h5>Fish by Type:</h5>
+                  <ul>
+                    {Object.entries(fishCollection.fishByType || {}).map(([type, count]) => (
+                      <li key={type}>
+                        <span className="fish-type">{type}:</span>
+                        <span className="fish-count">{count}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <div className="all-fish-list">
+                  <h5>All Fish Caught:</h5>
+                  <div className="fish-items">
+                    {fishCollection.allFish.map((fish, index) => (
+                      <div key={index} className="fish-item" style={{ color: fish.Color }}>
+                        <span className="fish-number">{index + 1}.</span>
+                        <span className="fish-type">{fish.Type}</span>
+                        <span className="fish-points">+{fish.Points} points</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       <div className="scores-list">
