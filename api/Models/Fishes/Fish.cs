@@ -1,26 +1,54 @@
 namespace Api.Models
 {
     using Api.Models.Bridge;
+    using Api.Models.Flyweight;
+    using Api.Models.Decorator;
+
     public abstract class Fish
     {
         private static int _nextId = 1;
         private static readonly object _idLock = new();
+        
+        // FLYWEIGHT: Shared data field (NEW)
+        private FishSharedData _sharedData = null;
+        
         public int Id { get; set; }
-
         public double PositionX { get; set; }
-
         public double PositionY { get; set; }
-
-        public double MovementSpeed { get; set; }
-
         public bool HasBeenHooked { get; set; } = false;
 
+        // OLD properties (keep for backward compatibility)
+        public double MovementSpeed { get; set; }
         public int Points { get; set; }
         public double Radius { get; set; }
         public string Color { get; set; } = null!;
         public IFishMove FishMove { get; set; } = null!;
         public IFishBehavior Behavior { get; set; }
-        public Api.Models.Decorator.IFishDecorator Decorator { get; set; } = null!;
+        public IFishDecorator Decorator { get; set; } = null!;
+
+        // NEW CONSTRUCTOR for Flyweight (ADD THIS)
+        protected Fish(FishSharedData sharedData, double x, double y)
+        {
+            lock (_idLock)
+            {
+                Id = _nextId++;
+            }
+
+            _sharedData = sharedData;
+            PositionX = x;
+            PositionY = y;
+            Decorator = new NormalFishDecorator();
+            
+            // Initialize OLD properties from shared data
+            MovementSpeed = _sharedData.BaseSpeed;
+            Points = (int)_sharedData.BasePoints;
+            Radius = _sharedData.BaseRadius;
+            Color = _sharedData.BaseColor;
+            FishMove = _sharedData.MovementPattern;
+            Behavior = _sharedData.Behavior;
+        }
+
+        // OLD CONSTRUCTOR (KEEP THIS)
         protected Fish(double x, double y)
         {
             lock (_idLock)
@@ -30,6 +58,8 @@ namespace Api.Models
 
             PositionX = x;
             PositionY = y;
+            // Old constructor doesn't set other properties - 
+            // child classes will set them individually
         }
 
         public abstract void UpdatePosition(int environmentWidth, int waterLevelHeight);
@@ -41,6 +71,7 @@ namespace Api.Models
                 PositionY <= 0 ||
                 PositionY >= waterLevelHeight;
         }
+        
         protected IFishMove GetNewMovementStrategy()
         {
             Random random = new Random();
@@ -57,90 +88,16 @@ namespace Api.Models
             };
         }
 
-        // private static int _nextId = 1; 
-        // private double DirectionX { get; set; }
-        // private double DirectionY { get; set; }
-        // private int FramesUntilDirectionChange { get; set; }
-        // private static readonly Random random = new Random();
+        // NEW PROPERTY: Get Points with decorator multiplier (Flyweight compatible)
+        public int GetDecoratedPoints()
+        {
+            if (_sharedData != null)
+                return (int)(_sharedData.BasePoints * Decorator.GetPointsMultiplier());
+            else
+                return (int)(Points * Decorator.GetPointsMultiplier());
+        }
 
-        // public Fish(FishType type, double positionX, double positionY)
-        // {
-        //     Id = _nextId++; 
-            
-        //     this.HasBeenHooked = false;
-        //     this.PositionX = positionX;
-        //     this.PositionY = positionY;
-
-        //     switch (type)
-        //     {
-        //         case FishType.BasicFish:
-        //             MovementSpeed = 5.0;
-        //             Points = 10;
-        //             break;
-        //         case FishType.RedFish:
-        //             MovementSpeed = 10.0;
-        //             Points = 20;
-        //             break;
-        //         case FishType.GoldenFish:
-        //             MovementSpeed = 15.0;
-        //             Points = 50;
-        //             break;
-        //         default:
-        //             MovementSpeed = 2.0;
-        //             Points = 5;
-        //             break;
-        //     }
-
-        // }
-        
-        // private void RandomizeDirection()
-        // {
-        //     // Random direction on a unit circle
-        //     double angle = random.NextDouble() * Math.PI * 2;
-        //     DirectionX = Math.Cos(angle);
-        //     DirectionY = Math.Sin(angle) * 0.3; // smaller vertical range
-
-        //     // Random time until next change (e.g., 1–3 seconds at 10 updates/s)
-        //     FramesUntilDirectionChange = random.Next(10, 30);
-        // }
-
-        // public void UpdatePosition(double width, double waterLevelHeight)
-        // {
-        //     if (HasBeenHooked) return;
-
-        //     // Move in the current direction
-        //     PositionX += DirectionX * MovementSpeed * 0.1;
-        //     PositionY += DirectionY * MovementSpeed * 0.1;
-
-        //     // Occasionally change direction
-        //     FramesUntilDirectionChange--;
-        //     if (FramesUntilDirectionChange <= 0)
-        //     {
-        //         RandomizeDirection();
-        //     }
-
-        //     // Bounce off edges
-        //     if (PositionX < 0)
-        //     {
-        //         PositionX = 0;
-        //         DirectionX = Math.Abs(DirectionX);
-        //     }
-        //     else if (PositionX > width)
-        //     {
-        //         PositionX = width;
-        //         DirectionX = -Math.Abs(DirectionX);
-        //     }
-
-        //     if (PositionY < 0)
-        //     {
-        //         PositionY = 0;
-        //         DirectionY = Math.Abs(DirectionY);
-        //     }
-        //     else if (PositionY > waterLevelHeight)
-        //     {
-        //         PositionY = waterLevelHeight;
-        //         DirectionY = -Math.Abs(DirectionY);
-        //     }
-        // }
+        // NEW METHOD: Check if using Flyweight
+        public bool IsUsingFlyweight() => _sharedData != null;
     }
 }

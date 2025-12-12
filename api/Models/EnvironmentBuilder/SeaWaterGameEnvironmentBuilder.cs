@@ -17,7 +17,7 @@ namespace Api.Models
 
         public IEnvironmentBuilder AddFishes()
         {
-            FishAbstractFactory fishFactory = new SeatWaterFishFactory();
+            FishAbstractFactory fishFactory = new SeaWaterFishFactory();
             int fishCount = _random.Next(20, 36);
             FishPrototype bluePrototype = new BlueFishShallow();
             FishPrototype yellowPrototype = new YellowFishShallow();

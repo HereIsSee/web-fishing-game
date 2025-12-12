@@ -48,7 +48,12 @@ if (app.Environment.IsDevelopment())
 //app.UseHttpsRedirection();
 
 // app.UseAuthorization();
+// Auto-run flyweight test on startup
+Console.WriteLine("🧪 Auto-running Flyweight Test...");
+Api.Models.Flyweight.FishFlyweightFactory.TestPerformance();
 
 app.MapControllers();
+
+
 
 app.Run();

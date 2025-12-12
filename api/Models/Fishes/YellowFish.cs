@@ -1,8 +1,18 @@
+using Api.Models.Bridge;
+using Api.Models.Flyweight;
+using Api.Models.Decorator;
+
 namespace Api.Models
 {
-    using Api.Models.Bridge;
     public class YellowFish : Fish
     {
+        // NEW Flyweight constructor
+        public YellowFish(FishSharedData sharedData, double x, double y) : base(sharedData, x, y)
+        {
+            this.Decorator = new NormalFishDecorator();
+        }
+
+        // OLD constructor
         public YellowFish(double x, double y) : base(x, y)
         {
             this.MovementSpeed = 5.0;
@@ -11,16 +21,16 @@ namespace Api.Models
             this.Color = "#D9E65A";
             this.FishMove = new RandomMove();
             this.Behavior = new TerritorialBehavior();
+            this.Decorator = new NormalFishDecorator();
         }
+
         public override void UpdatePosition(int environmentWidth, int waterLevelHeight)
         {
             this.FishMove.Move(this, environmentWidth, waterLevelHeight);
-
             if(IsTouchingBoundary(environmentWidth, waterLevelHeight))
             {
                 this.FishMove = GetNewMovementStrategy();
             }
         }
-
     }
 }
