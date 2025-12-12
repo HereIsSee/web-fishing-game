@@ -1,5 +1,6 @@
 using Api.Models;
 using Api.Models.Facade;
+using Api.Models.Flyweight;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Api.Hubs
@@ -377,12 +378,31 @@ namespace Api.Hubs
             {
                 Console.WriteLine($"🎯 [BACKEND] Player {player.Name} disconnected - clearing active status");
                 // Tell frontend to clear localStorage flags
-                await Clients.Caller.SendAsync("ClearActivePlayer");
+                await Clients.Caller.SendAsync("ClearActivePlayer", player.Name);
             }
             
             // Continue with your existing LeaveSession logic
             await LeaveSession();
             await base.OnDisconnectedAsync(exception);
+        }
+        public async Task TestFlyweightPerformance()
+        {
+            Console.WriteLine("🎣 Running Flyweight Pattern Performance Measurement...");
+            
+            // Run your test
+            FishFlyweightFactory.TestPerformance();
+            FishFlyweightFactory.PrintMemoryStatistics();
+            
+            await Clients.Caller.SendAsync("TestResult", "Flyweight performance test completed!");
+        }
+        public async Task RunFlyweightTest()
+        {
+            Console.WriteLine("🧪 Running Flyweight Performance Test...");
+            
+            // Run your test
+            Api.Models.Flyweight.FishFlyweightFactory.TestPerformance();
+            
+            await Clients.Caller.SendAsync("TestComplete", "Flyweight test finished!");
         }
     }
 }

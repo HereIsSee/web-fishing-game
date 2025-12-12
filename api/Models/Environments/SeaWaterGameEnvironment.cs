@@ -32,7 +32,7 @@ namespace Api.Models
         }
         private void RefillFishes()
         {
-            FishAbstractFactory fishFactory = new SeatWaterFishFactory();
+            FishAbstractFactory fishFactory = new SeaWaterFishFactory();
             int newFishCount = random.Next(5, 11);
 
 
