@@ -10,12 +10,14 @@ namespace Api.Models
         public BlueFish(FishSharedData sharedData, double x, double y) 
             : base(sharedData, x, y)
         {
+            this.Type = "BlueFish";
             this.Decorator = new NormalFishDecorator();
         }
 
         // KEEP OLD constructor
         public BlueFish(double x, double y) : base(x, y)
         {
+            this.Type = "BlueFish";
             this.MovementSpeed = 1.0;
             this.Points = 5;
             this.Radius = 10.0;

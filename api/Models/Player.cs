@@ -2,6 +2,63 @@ namespace Api.Models
 {
     public class Player
     {
+        private List<Fish> _caughtFishes = new List<Fish>();
+
+        public IEnumerable<Fish> GetCaughtFishes()
+        {
+            foreach (var fish in _caughtFishes)
+            {
+                yield return fish;
+            }
+        }
+        public Dictionary<string, int> GetCaughtFishesByType()
+        {
+            var result = new Dictionary<string, int>();
+            
+            if (_caughtFishes == null || !_caughtFishes.Any())
+                return result;
+            
+            return _caughtFishes
+                .GroupBy(f => f.Type ?? "Unknown")
+                .ToDictionary(g => g.Key, g => g.Count());
+        }
+        
+        // Add fish when caught
+        public void AddCaughtFish(Fish fish)
+        {
+            _caughtFishes.Add(fish);
+        }
+        
+        // Get fish count (uses iterator internally)
+        public int GetTotalFishCaught()
+        {
+            return _caughtFishes.Count;
+        }
+        
+        // Get unique fish types caught (uses iterator)
+        public int GetUniqueFishTypesCaught()
+        {
+            if (_caughtFishes == null || !_caughtFishes.Any())
+                return 0;
+            
+            // Return count, not the list itself
+            return _caughtFishes
+                .Select(f => f.Type)
+                .Where(type => !string.IsNullOrEmpty(type))
+                .Distinct()
+                .Count();
+        }
+        public List<string> GetUniqueFishTypeNames()
+        {
+            if (_caughtFishes == null || !_caughtFishes.Any())
+                return new List<string>();
+            
+            return _caughtFishes
+                .Select(f => f.Type)
+                .Where(type => !string.IsNullOrEmpty(type))
+                .Distinct()
+                .ToList();
+        }
         public int Id { get; set; }
         public string ConnectionId { get; set; }
         public string Name { get; set; } = string.Empty;

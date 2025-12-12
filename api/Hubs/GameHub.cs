@@ -184,7 +184,6 @@ namespace Api.Hubs
             Console.WriteLine($"✅ Player {player.Name} left successfully");
         }
         
-        
         public async Task StartGame()
         {
             _session.StartGame();
@@ -197,7 +196,7 @@ namespace Api.Hubs
                 {
                     _session.Environment.Update();
                     await _hubContext.Clients.All.SendAsync("UpdateFishes", _session.Environment.Fishes);
-                    
+                            
                     if (_session.State == GameState.Playing)
                     {
                         var elapsedSeconds = (int)(DateTime.UtcNow - _session.StartTime).TotalSeconds;
@@ -207,11 +206,19 @@ namespace Api.Hubs
                             _session.EndGame(); // Auto-saves all scores
                             _gameFacade.PlayGameOverSound();
                             _gameFacade.RenderAllPlayers(_session.GetAllPlayers());
-                            
+                                    
+                            // Send game ended notification
                             await _hubContext.Clients.All.SendAsync("GameEnded", new {
                                 winner = _session.GetWinner()?.Name,
                                 playerScores = _session.Players.ToDictionary(p => p.Value.Name, p => p.Value.Score)
                             });
+                            
+                            // 🎣 NEW: Send fish collection to each player
+                            foreach (var connectionId in _session.Players.Keys)
+                            {
+                                await Clients.Client(connectionId).SendAsync("ShowPlayerFishCollection");
+                            }
+                            
                             await SendScoreboardUpdate();
                             break;
                         }
@@ -222,7 +229,7 @@ namespace Api.Hubs
             
             await SendScoreboardUpdate();
         }
-
+        
         public async Task CatchFish(int fishId)
         {
             var player = _session.GetPlayer(Context.ConnectionId);
@@ -240,6 +247,8 @@ namespace Api.Hubs
                 }
                 else
                 {
+                    player.AddCaughtFish(fish); // Add to player's collection
+                    player.FishesPulledIn++; // Increment count
                     var decorator = fish.Decorator;
                     if (decorator != null)
                     {
@@ -403,6 +412,78 @@ namespace Api.Hubs
             Api.Models.Flyweight.FishFlyweightFactory.TestPerformance();
             
             await Clients.Caller.SendAsync("TestComplete", "Flyweight test finished!");
+        }
+        
+        public async Task ShowPlayerFishCollection()
+        {
+            var player = _session.GetPlayer(Context.ConnectionId);
+            if (player == null) 
+            {
+                Console.WriteLine($"⚠️ Player not found for fish collection: {Context.ConnectionId}");
+                return;
+            }
+            
+            try
+            {
+                // Get the fish by type - this now returns Dictionary<string, int>
+                var fishByTypeDict = player.GetCaughtFishesByType();
+                
+                // Create safe collections
+                var allFish = new List<object>();
+                var caughtFishes = player.GetCaughtFishes();
+                
+                if (caughtFishes != null)
+                {
+                    foreach (var fish in caughtFishes)
+                    {
+                        allFish.Add(new 
+                        { 
+                            Type = fish.Type ?? "Unknown", 
+                            Points = fish.Points,
+                            Color = fish.Color ?? "#000000",
+                            Name = fish.Type ?? "Unknown"
+                        });
+                    }
+                }
+                
+                var fishStats = new
+                {
+                    TotalCaught = player.GetTotalFishCaught(),
+                    UniqueTypes = player.GetUniqueFishTypesCaught(),
+                    FishByType = fishByTypeDict, // This is now a Dictionary<string, int>
+                    AllFish = allFish,
+                    PlayerName = player.Name
+                };
+                
+                Console.WriteLine($"🎣 Preparing fish collection for {player.Name}:");
+                Console.WriteLine($"   Total: {fishStats.TotalCaught}");
+                Console.WriteLine($"   Unique types: {fishStats.UniqueTypes}");
+                Console.WriteLine($"   FishByType entries: {fishStats.FishByType.Count}");
+                
+                // Log some details for debugging
+                foreach (var kvp in fishStats.FishByType)
+                {
+                    Console.WriteLine($"   - {kvp.Key}: {kvp.Value}");
+                }
+                
+                await Clients.Caller.SendAsync("FishCollection", fishStats);
+                Console.WriteLine($"🎣 Sent fish collection to {player.Name}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error preparing fish collection: {ex.Message}");
+                Console.WriteLine($"❌ Stack trace: {ex.StackTrace}");
+                
+                // Send minimal valid data
+                await Clients.Caller.SendAsync("FishCollection", new
+                {
+                    TotalCaught = 0,
+                    UniqueTypes = 0,
+                    FishByType = new Dictionary<string, int>(),
+                    AllFish = new List<object>(),
+                    PlayerName = player?.Name ?? "Unknown"
+                });
+            }
         }
     }
 }
