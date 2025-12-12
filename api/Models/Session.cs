@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Security.Principal;
 using Api.Hubs;
+using Api.Models.Memento;
 
 namespace Api.Models
 {
@@ -18,8 +19,12 @@ namespace Api.Models
         public GameState State { get; set; } = GameState.Waiting;
         public int TimerDuration { get; set; } = 300;
 
+        // ==================== SIMPLE MEMENTO INTEGRATION ====================
+        private readonly SaveManager _saveManager = SaveManager.Instance;
+
         private static readonly Lazy<Session> _instance = new Lazy<Session>(() => new Session());
         public static Session Instance => _instance.Value;
+        
         private Session()
         {
             GameEnvironmentFactory factory = new SeaWaterEnvironmentFactory();
@@ -32,6 +37,7 @@ namespace Api.Models
             this.Attach(this.Scoreboard);
         }
 
+        // ==================== OBSERVER PATTERN ====================
         private List<Observer> _observers = new List<Observer>();
 
         public void Attach(Observer observer) {
@@ -48,26 +54,49 @@ namespace Api.Models
             }
         }
 
-        public void AddPlayer(string connectionId, string playerName)
+        // ==================== PLAYER MANAGEMENT WITH SCORE PERSISTENCE ====================
+        
+        public void AddPlayer(string connectionId, string playerName, string? persistentIdFromBrowser = null)
         {
             Random rnd = new Random();
             double positionX = rnd.Next(0, 800);
 
-            Players[connectionId] = new Player(
-                connectionId, playerName, positionX, 500.0
-            );
+            var player = new Player(connectionId, playerName, positionX, 500.0, persistentIdFromBrowser);
+            Players[connectionId] = player;
+            
+            // If browser provided a persistent ID, try to load saved score
+            if (!string.IsNullOrEmpty(persistentIdFromBrowser))
+            {
+                // You need to add a SetPersistentId method to Player class
+                // player.SetPersistentId(persistentIdFromBrowser);
+                
+                // Try to load saved score
+                if (_saveManager.HasSave(persistentIdFromBrowser))
+                {
+                    _saveManager.LoadPlayerScore(player);
+                    Console.WriteLine($"🔄 Loaded saved score {player.Score} for {playerName}");
+                }
+            }
+            
             Notify();
+            Console.WriteLine($"✅ Player {playerName} joined with score: {player.Score}");
         }
 
         public Player GetPlayer(string connectionId)
         {
-            return Players[connectionId];
+            // Safer: TryGet instead of direct access
+            if (Players.TryGetValue(connectionId, out var player))
+            {
+                return player;
+            }
+            return null; // Or throw a proper exception
         }
 
         public List<Player> GetAllPlayers()
         {
             return Players.Values.ToList();
         }
+
         public void UpdatePlayerPosition(string connectionId, double PositionX)
         {
             var player = Players[connectionId];
@@ -79,16 +108,61 @@ namespace Api.Models
 
         public void RemovePlayer(string connectionId)
         {
+            // Auto-save score before player leaves
+            if (Players.TryGetValue(connectionId, out var player))
+            {
+                _saveManager.SavePlayerScore(player);
+                Console.WriteLine($"💾 Auto-saved score {player.Score} for {player.Name}");
+            }
+            
             Players.TryRemove(connectionId, out _);
             Notify();
         }
 
+        // ==================== SIMPLE MEMENTO METHODS ====================
+        
+        public void SavePlayerScore(string connectionId)
+        {
+            if (Players.TryGetValue(connectionId, out var player))
+            {
+                _saveManager.SavePlayerScore(player);
+            }
+        }
+
+        public bool LoadPlayerScore(string connectionId)
+        {
+            if (Players.TryGetValue(connectionId, out var player))
+            {
+                return _saveManager.LoadPlayerScore(player);
+            }
+            return false;
+        }
+
+        public string GetSaveForBrowser(string connectionId)
+        {
+            if (Players.TryGetValue(connectionId, out var player))
+            {
+                return _saveManager.GetSaveForBrowser(player.GetPersistentId());
+            }
+            return string.Empty;
+        }
+
+        public bool ImportSaveFromBrowser(string connectionId, string encryptedData)
+        {
+            if (Players.TryGetValue(connectionId, out var player))
+            {
+                return _saveManager.ImportSaveFromBrowser(player.GetPersistentId(), encryptedData);
+            }
+            return false;
+        }
+
+        // ==================== GAME MANAGEMENT ====================
+        
         public void StartGame()
         {
             State = GameState.Playing;
             IsActive = true;
             Notify();
-            // Čia galima inicijuoti Game objektą jei reikia
         }
 
         public void EndGame()
@@ -96,19 +170,24 @@ namespace Api.Models
             State = GameState.Finished;
             EndTime = DateTime.UtcNow;
             IsActive = false;
+            
+            // Auto-save all players' final scores
+            foreach (var player in Players.Values)
+            {
+                _saveManager.SavePlayerScore(player);
+            }
+            
             Notify();
+            Console.WriteLine("🏁 Game ended - all scores saved");
         }
 
-        // PRIDĖTI: Surasti laimėtoją
         public Player? GetWinner()
         {
             return Players.Values.OrderByDescending(p => p.Score).FirstOrDefault();
         }
-
-        
     }
 
-    // PRIDĖTI: Enum būsenoms
+    // Enum for game states
     public enum GameState
     {
         Waiting,
