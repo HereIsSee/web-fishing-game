@@ -63,8 +63,7 @@ const GameCanvas = ({
       if (player) {
         const isRodCast = player.fishingRod.cast;
 
-        console.log("Rod cast:", isRodCast);
-        console.log("Commands:", commands);
+       
 
         // Determine hook speed and apply freeze/slow effects (from old version)
         let hookSpeed = 5;

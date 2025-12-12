@@ -1,7 +1,7 @@
 const fishFactory = (canvasContext, fishData) => {
   let { id, positionX, positionY, radius, movementSpeed, hasBeenHooked } =
     fishData;
-  console.log(fishData);
+  //console.log(fishData);
   const drawFish = () => {
     canvasContext.fillStyle = fishData.color;
 

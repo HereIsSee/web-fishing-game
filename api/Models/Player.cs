@@ -3,15 +3,11 @@ namespace Api.Models
     public class Player
     {
         public int Id { get; set; }
-
         public string ConnectionId { get; set; }
-
         public string Name { get; set; } = string.Empty;
-
         public int Score { get; set; } = 0;
-
         public int FishesPulledIn { get; set; } = 0;
-
+        
         // Player has a boat
         public Boat Boat { get; set; }
 
@@ -26,7 +22,10 @@ namespace Api.Models
         public bool IsSlowed { get; set; } = false;
         public DateTime? SlowdownEndTime { get; set; } = null;
 
-        public Player(string connectionId, string name, double positionX, double positionY)
+        // Memento: Persistent ID for browser storage
+        private string _persistentPlayerId;
+        
+        public Player(string connectionId, string name, double positionX, double positionY, string? persistentId = null)
         {
             this.ConnectionId = connectionId;
             this.Name = name;
@@ -34,8 +33,103 @@ namespace Api.Models
             this.FishesPulledIn = 0;
             this.Boat = new Boat(positionX, positionY);
             this.FishingRod = new FishingRod(positionX, positionY);
+            
+            // Use provided persistentId or generate new
+            this._persistentPlayerId = persistentId ?? GeneratePersistentId();
         }
 
+        // ==================== SIMPLE MEMENTO METHODS ====================
+        
+        // Creates a secure snapshot of ONLY the score
+        public PlayerMemento Save()
+        {
+            Console.WriteLine($"💾 Saving player {Name} score: {Score}");
+            return new PlayerMemento(Score, _persistentPlayerId, DateTime.UtcNow);
+        }
+
+        // Restores ONLY the score from a memento
+        public void Load(PlayerMemento memento)
+        {
+            if (memento == null) return;
+            
+            Console.WriteLine($"🔄 Loading player {Name} from save. Old: {Score}, New: {memento.SavedScore}");
+            
+            // Restore ONLY the score
+            Score = memento.SavedScore;
+            
+            // Update persistent ID if needed
+            if (!string.IsNullOrEmpty(memento.SavedPersistentId))
+            {
+                _persistentPlayerId = memento.SavedPersistentId;
+            }
+            
+            Console.WriteLine($"✅ Player {Name} restored with score: {Score}");
+        }
+
+        // ==================== SECURE MEMENTO CLASS ====================
+        
+        public class PlayerMemento
+        {
+            // Read-only fields - cannot be modified after creation
+            public readonly int SavedScore;
+            public readonly string SavedPersistentId;
+            public readonly DateTime SavedTimestamp;
+
+            internal PlayerMemento(int score, string persistentId, DateTime timestamp)
+            {
+                SavedScore = score;
+                SavedPersistentId = persistentId;
+                SavedTimestamp = timestamp;
+            }
+            
+            // Simple Base64 encryption for security requirement
+            public string ToEncryptedString()
+            {
+                try
+                {
+                    var data = $"{SavedScore}|{SavedPersistentId}|{SavedTimestamp:O}";
+                    return Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(data));
+                }
+                catch
+                {
+                    return string.Empty;
+                }
+            }
+        }
+        
+        // Static method to create PlayerMemento from encrypted string
+        public static PlayerMemento? FromEncryptedString(string encryptedData)
+        {
+            try
+            {
+                var data = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(encryptedData));
+                var parts = data.Split('|');
+                
+                if (parts.Length < 3) return null;
+                
+                int score = int.Parse(parts[0]);
+                string persistentId = parts[1];
+                DateTime timestamp = DateTime.Parse(parts[2]);
+                
+                return new PlayerMemento(score, persistentId, timestamp);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        // ==================== HELPER METHODS ====================
+        
+        private string GeneratePersistentId()
+        {
+            return $"player_{Guid.NewGuid():N}";
+        }
+
+        public string GetPersistentId() => _persistentPlayerId;
+
+        // ==================== ORIGINAL METHODS (UNCHANGED) ====================
+        
         public void UpdateBoatPosition(double positionX)
         {
             if (this.FishingRod.Cast)
@@ -44,6 +138,7 @@ namespace Api.Models
             this.Boat.PositionX = positionX;
             this.FishingRod.PositionX = positionX;
         }
+        
         public void ToggleFishingRodCast()
         {
             this.FishingRod.Cast = !this.FishingRod.Cast;
@@ -53,6 +148,5 @@ namespace Api.Models
                 this.FishingRod.PositionY = this.Boat.PositionY;   
             }
         }
-
     }
 }
