@@ -3,6 +3,7 @@ namespace Api.Models
     using Api.Models.Bridge;
     using Api.Models.Flyweight;
     using Api.Models.Decorator;
+    using Api.Models.Visitor;
 
     public abstract class Fish
     {
@@ -68,6 +69,11 @@ namespace Api.Models
         }
 
         public abstract void UpdatePosition(int environmentWidth, int waterLevelHeight);
+        
+        public virtual void Accept(IFishVisitor visitor)
+        {
+            // Default empty implementation for fish that don't implement visitor
+        }
 
         protected bool IsTouchingBoundary(int environmentWidth, int waterLevelHeight)
         {

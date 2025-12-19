@@ -162,3 +162,257 @@
   background: #4fc3f7;
   border-radius: 3px;
 }
+
+/* Achievements Panel */
+.achievements-panel {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  padding: 1.5rem;
+  border-radius: 15px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  max-width: 350px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  z-index: 1000;
+  color: white;
+  animation: slideInRight 0.5s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.achievements-panel h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  text-align: center;
+}
+
+.total-catches {
+  text-align: center;
+  margin: 0.5rem 0 1rem 0;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.achievement-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.achievement-card {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 0.75rem;
+  border-radius: 10px;
+  backdrop-filter: blur(10px);
+  transition: transform 0.2s, background 0.2s;
+}
+
+.achievement-card:hover {
+  transform: translateX(-5px);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.achievement-icon {
+  font-size: 2rem;
+  margin-right: 1rem;
+  min-width: 40px;
+  text-align: center;
+}
+
+.achievement-details {
+  flex: 1;
+}
+
+.achievement-details h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+}
+
+.achievement-count {
+  margin: 0;
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  margin-top: 0.25rem;
+}
+
+.badge.gold {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #333;
+}
+
+.badge.silver {
+  background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 100%);
+  color: #333;
+}
+
+.badge.bronze {
+  background: linear-gradient(135deg, #cd7f32 0%, #daa06d 100%);
+  color: white;
+}
+
+/* Scrollbar for achievements panel */
+.achievements-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.achievements-panel::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.achievements-panel::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
+}
+
+.achievements-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+/* Performance Panel */
+.performance-panel {
+  position: relative;
+  width: 100%;
+  max-width: 900px;
+  margin: 20px auto;
+  max-height: 500px;
+  background: rgba(20, 20, 40, 0.95);
+  border: 2px solid rgba(100, 150, 255, 0.5);
+  border-radius: 15px;
+  padding: 20px;
+  color: white;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  z-index: 100;
+}
+
+.performance-panel h2 {
+  margin: 0 0 5px 0;
+  font-size: 1.4rem;
+  color: #4fc3f7;
+  text-align: center;
+}
+
+.performance-panel .section-subtitle {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #aaa;
+  margin-bottom: 15px;
+}
+
+.performance-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.performance-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 15px;
+}
+
+.performance-section h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.1rem;
+  color: #81c784;
+}
+
+.stats-overview {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 8px;
+  border-radius: 6px;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: #aaa;
+  margin-bottom: 2px;
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+.operations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.operation-stat {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 10px;
+  border-radius: 6px;
+  border-left: 3px solid #4fc3f7;
+}
+
+.operation-stat h4 {
+  margin: 0 0 5px 0;
+  font-size: 0.9rem;
+  color: #ffeb3b;
+}
+
+.op-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.8rem;
+}
+
+.op-details span {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: #ddd;
+}
+
+.performance-panel::-webkit-scrollbar {
+  width: 8px;
+}
+
+.performance-panel::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.performance-panel::-webkit-scrollbar-thumb {
+  background: rgba(100, 150, 255, 0.5);
+  border-radius: 10px;
+}
+
+.performance-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 150, 255, 0.7);
+}

@@ -1,5 +1,6 @@
 using Api.Hubs;
 using Api.Models;
+using Api.Models.Interpreter;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,10 @@ builder.Services.AddSignalR();
 // Add logging
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
+
+// === INTERPRETER PATTERN ===
+// Register console command interpreter service
+builder.Services.AddHostedService<ConsoleCommandInterpreterService>();
 
 
 

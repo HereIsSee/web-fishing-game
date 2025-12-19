@@ -1,13 +1,13 @@
 const obstaclesFactory = (canvasContext, obstacleData)=>{
 
     const drawObstacle = () =>{
-        canvasContext.fillStyle = "#55974cff";
+        canvasContext.fillStyle = "#90EE90"; // Light green
         canvasContext.lineWidth = 12;
 
-        const x = obstacleData.PositionX;
-        const y = obstacleData.PositionY;
-        const height = obstacleData.height;
-        const width = obstacleData.width;
+        const x = obstacleData.PositionX || obstacleData.positionX;
+        const y = obstacleData.PositionY || obstacleData.positionY;
+        const height = obstacleData.Height || obstacleData.height;
+        const width = obstacleData.Width || obstacleData.width;
 
         canvasContext.beginPath();
         canvasContext.moveTo(x,y);

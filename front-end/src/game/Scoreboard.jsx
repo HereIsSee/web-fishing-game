@@ -40,6 +40,11 @@ const Scoreboard = ({ scoreboardData, fishCollection }) => {
     scoreboardData.currentGameState === "Finished" ||
     displayTime === 0;
 
+  const totalCaught = fishCollection?.totalCaught ?? fishCollection?.TotalCaught ?? 0;
+  const uniqueTypes = fishCollection?.uniqueTypes ?? fishCollection?.UniqueTypes ?? 0;
+  const fishByType = fishCollection?.fishByType ?? fishCollection?.FishByType ?? {};
+  const allFish = fishCollection?.allFish ?? fishCollection?.AllFish ?? [];
+
   return (
     <div className="scoreboard">
       <h3>Fishing Game Scoreboard</h3>
@@ -61,19 +66,19 @@ const Scoreboard = ({ scoreboardData, fishCollection }) => {
           {fishCollection && (
             <div className="fish-collection">
               <div className="fish-summary">
-                <h4>🎣 Your Catch: {fishCollection.totalCaught} fish</h4>
+                <h4>🎣 Your Catch: {totalCaught} fish</h4>
               </div>
               
               <div className="fish-details">
                 <div className="fish-stats">
-                  <p><strong>Total caught:</strong> {fishCollection.totalCaught}</p>
-                  <p><strong>Unique types:</strong> {fishCollection.uniqueTypes}</p>
+                  <p><strong>Total caught:</strong> {totalCaught}</p>
+                  <p><strong>Unique types:</strong> {uniqueTypes}</p>
                 </div>
                 
                 <div className="fish-by-type">
                   <h5>Fish by Type:</h5>
                   <ul>
-                    {Object.entries(fishCollection.fishByType || {}).map(([type, count]) => (
+                    {Object.entries(fishByType || {}).map(([type, count]) => (
                       <li key={type}>
                         <span className="fish-type">{type}:</span>
                         <span className="fish-count">{count}</span>
@@ -85,7 +90,7 @@ const Scoreboard = ({ scoreboardData, fishCollection }) => {
                 <div className="all-fish-list">
                   <h5>All Fish Caught:</h5>
                   <div className="fish-items">
-                    {fishCollection.allFish.map((fish, index) => (
+                    {(allFish || []).map((fish, index) => (
                       <div key={index} className="fish-item" style={{ color: fish.Color }}>
                         <span className="fish-number">{index + 1}.</span>
                         <span className="fish-type">{fish.Type}</span>

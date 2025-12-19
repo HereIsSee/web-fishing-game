@@ -95,11 +95,28 @@ function App() {
   const [persistentPlayerId, setPersistentPlayerId] = useState(null);
   const [fishCollection, setFishCollection] = useState(null);
   const [gameEnvironmentData, setGameEnvironmentData] = useState(null);
+  const [performanceStats, setPerformanceStats] = useState(null);
+
+  const normalizeFishCollection = (stats) => {
+    if (!stats) return null;
+    return {
+      totalCaught: stats.totalCaught ?? stats.TotalCaught ?? 0,
+      uniqueTypes: stats.uniqueTypes ?? stats.UniqueTypes ?? 0,
+      fishByType: stats.fishByType ?? stats.FishByType ?? {},
+      allFish: stats.allFish ?? stats.AllFish ?? [],
+      playerName: stats.playerName ?? stats.PlayerName ?? "",
+    };
+  };
 
   // Small ref used to allow the next ScoreboardUpdated to reset the timer
   // only when a real PlayerJoined event happened. This prevents routine
   // scoreboard updates (e.g., fish caught) from resetting the countdown.
   const allowTimerResetRef = useRef(false);
+
+  // Keep track of whether we reached the end-of-game UI.
+  // If the SignalR connection closes after the game ends, we still want to show
+  // the end screen instead of dropping the user back to the join screen.
+  const hasGameEndedRef = useRef(false);
 
   const { playSound, initAudioContext } = useAudioManager();
 
@@ -379,6 +396,10 @@ function App() {
           playSound(soundType);
         });
 
+        currentConnection.on("ActionDenied", (message) => {
+          console.warn("🔐 Action denied by proxy:", message);
+        });
+
         currentConnection.on("GameEnded", (result) => {
           console.log(
             "🎉 Game ended! Winner:",
@@ -386,31 +407,42 @@ function App() {
             "Scores:",
             result.playerScores
           );
+
+          hasGameEndedRef.current = true;
           setScoreboardData({
             playerScores: result.playerScores,
             currentGameState: "Finished",
             remainingTime: 0,
           });
 
+          // Proxy metrics payload (if server sent it)
+          if (result?.performanceStats) {
+            setPerformanceStats(result.performanceStats);
+          }
+
           // 🎣 NEW: Fetch fish collection when game ends
-          if (currentConnection.state === "Connected") {
+          // Note: HubConnection.state is an enum, not the string "Connected".
+          // Just try the invoke; if disconnected, it will fail and we'll log it.
+          try {
             currentConnection.invoke("ShowPlayerFishCollection");
+          } catch (e) {
+            console.warn("⚠️ Could not request fish collection on GameEnded:", e);
           }
         });
 
         currentConnection.on("FishCollection", (stats) => {
           console.log("🎣🎣🎣 YOUR CATCH REPORT 🎣🎣🎣", stats);
 
-          // SAFE ACCESS - handle null/undefined
-          const total = stats?.TotalCaught ?? 0;
-          console.log(`Total fish caught: ${total}`);
+          const normalized = normalizeFishCollection(stats);
+          console.log("🎣 Normalized fishCollection:", normalized);
+          console.log(`Total fish caught: ${normalized?.totalCaught ?? 0}`);
 
-          setFishCollection(stats);
+          setFishCollection(normalized);
 
           console.log("\n📊 By type:");
 
           // FIXED: Add null check before Object.entries
-          const fishByType = stats?.FishByType ?? {};
+          const fishByType = normalized?.fishByType ?? {};
           for (const [type, count] of Object.entries(fishByType)) {
             console.log(`  ${type}: ${count} fish`);
           }
@@ -422,6 +454,9 @@ function App() {
           setFishesData([]);
           setScoreboardData(null);
           setFishCollection(null); // ✅ Also reset fish collection
+          setPerformanceStats(null);
+
+          hasGameEndedRef.current = false;
         });
 
         currentConnection.on("ReceivePersistentId", (serverPersistentId) => {
@@ -482,7 +517,11 @@ function App() {
           // ALSO clear by player name (remove old logic)
           localStorage.removeItem(`active_${playerName}`);
 
-          setJoined(false);
+          // If the connection closes after the game ends, keep the UI on the
+          // end screen instead of returning to the join screen.
+          if (!hasGameEndedRef.current) {
+            setJoined(false);
+          }
         });
 
         currentConnection.onreconnecting(() => {
@@ -504,6 +543,8 @@ function App() {
 
       await currentConnection.invoke("JoinSession", playerName, persistentId);
       console.log("✅ JoinSession called with persistent ID:", persistentId);
+
+      hasGameEndedRef.current = false;
 
       setJoined(true);
     } catch (err) {
@@ -535,6 +576,25 @@ function App() {
     }
   };
 
+  const normalizedGameState = (scoreboardData?.currentGameState ?? "")
+    .toString()
+    .toLowerCase();
+  const endedByState =
+    normalizedGameState === "ended" || normalizedGameState === "finished";
+  const endedByTime = (() => {
+    const serverEnd = scoreboardData?._serverEndTime;
+    if (typeof serverEnd === "number") return serverEnd - Date.now() <= 0;
+
+    const rem =
+      scoreboardData?.timeRemaining ??
+      scoreboardData?.remainingTime ??
+      scoreboardData?.timeLeft ??
+      scoreboardData?.seconds ??
+      null;
+    return rem === 0;
+  })();
+  const showSplash = !!scoreboardData && (endedByState || endedByTime);
+
   return (
     <div className="app">
       <h1>Fishing Game</h1>
@@ -558,15 +618,14 @@ function App() {
           />
 
           {/* KEEP SPLASHSCREEN BUT PASS fishCollection TO IT */}
-          {scoreboardData &&
-          (scoreboardData.currentGameState === "Ended" ||
-            scoreboardData.currentGameState === "Finished") ? (
+          {showSplash ? (
             <SplashScreen
               playerScores={scoreboardData.playerScores || {}}
               onRestart={handlePlayAgain}
               onClose={() => {}}
-              fishCollection={fishCollection} // ADD THIS
-              connection={connection} // ADD THIS
+              fishCollection={fishCollection}
+              connection={connection}
+              performanceStats={performanceStats}
             />
           ) : (
             <GameCanvas

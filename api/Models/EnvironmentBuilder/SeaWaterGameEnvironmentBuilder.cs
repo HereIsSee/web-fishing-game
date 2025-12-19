@@ -135,6 +135,13 @@ namespace Api.Models
 
         public IEnvironmentBuilder AddObstacles()
         {
+            // Add some seaweed obstacles
+            _gameEnvironment.Obstacles.Add(new Obstacle(ObstacleType.Seaweed, 500, 0));
+            _gameEnvironment.Obstacles.Add(new Obstacle(ObstacleType.Seaweed, 300, 0));
+            _gameEnvironment.Obstacles.Add(new Obstacle(ObstacleType.Rock, 150, 200));
+            
+            Console.WriteLine($"🚧 Added {_gameEnvironment.Obstacles.Count} obstacles to environment");
+            
             return this;
         }
 

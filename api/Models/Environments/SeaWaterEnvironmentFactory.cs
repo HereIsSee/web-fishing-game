@@ -9,7 +9,7 @@ namespace Api.Models
             GameEnvironment environment = builder
                 .StartNew(new SeaWaterGameEnvironment())
                 .AddFishes()
-                //.AddObstacles() // Will be implemented later
+                .AddObstacles()
                 .Build();
 
             return environment;

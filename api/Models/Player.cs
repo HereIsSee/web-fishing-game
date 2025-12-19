@@ -65,6 +65,15 @@ namespace Api.Models
         public int Score { get; set; } = 0;
         public int FishesPulledIn { get; set; } = 0;
         
+        // Chain of Responsibility: Energy for catching fish
+        public int Energy { get; set; } = 100;
+        public const int MAX_ENERGY = 100;
+        public const int ENERGY_REGEN_PER_SECOND = 1;
+        public DateTime LastEnergyRegen { get; set; } = DateTime.UtcNow;
+        
+        // Chain of Responsibility: Last catch time for cooldown
+        public DateTime LastCatchTime { get; set; } = DateTime.MinValue;
+        
         // Player has a boat
         public Boat Boat { get; set; }
 

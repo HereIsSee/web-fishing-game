@@ -1,6 +1,8 @@
 namespace Api.Models
 {
     using Api.Models.Bridge;
+    using Api.Models.Visitor;
+    
     public class FatFish : Fish
     {
         public FatFish(double x, double y) : base(x, y)
@@ -19,5 +21,9 @@ namespace Api.Models
         
         
 
+        public override void Accept(IFishVisitor visitor)
+        {
+            visitor.Visit(this);
+        }
     }
 }

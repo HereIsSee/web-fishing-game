@@ -9,11 +9,11 @@ namespace Api.Models.Prototype
         public double PositionY { get; set; }
         public int Points { get; set; }
         public double Radius { get; set; }
-        public string Color { get; set; }
+        public string? Color { get; set; }
         public double MovementSpeed { get; set; }
         public bool HasBeenHooked { get; set; }
         
-        public FishMovementBehavior Movement { get; set; }
+        public FishMovementBehavior? Movement { get; set; }
 
         protected FishPrototype()
         {

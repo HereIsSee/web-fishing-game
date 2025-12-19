@@ -25,7 +25,7 @@ namespace Api.Models.Prototype
                 Color = this.Color,
                 MovementSpeed = this.MovementSpeed,
                 HasBeenHooked = this.HasBeenHooked,
-                Movement = this.Movement 
+                Movement = this.Movement!  
             };
         }
 

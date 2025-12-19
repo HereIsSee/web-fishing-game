@@ -89,11 +89,34 @@ export function generateBombSound(audioContext) {
   return audioBuffer;
 }
 
+export function generateGameStartSound(audioContext) {
+  const sampleRate = audioContext.sampleRate;
+  const duration = 0.8;
+  const frameCount = sampleRate * duration;
+  const audioBuffer = audioContext.createBuffer(1, frameCount, sampleRate);
+  const channelData = audioBuffer.getChannelData(0);
+
+  for (let i = 0; i < frameCount; i++) {
+    const progress = i / frameCount;
+    // Rising fanfare: 523 Hz (C5) -> 659 Hz (E5) -> 784 Hz (G5)
+    let frequency = 523;
+    if (progress > 0.33) frequency = 659;
+    if (progress > 0.66) frequency = 784;
+    
+    const angle = (frequency * i * 2 * Math.PI) / sampleRate;
+    const envelope = Math.max(0, 1 - progress);
+    channelData[i] = Math.sin(angle) * 0.3 * envelope;
+  }
+
+  return audioBuffer;
+}
+
 const soundLibrary = {
   catch: generateCatchSound,
   miss: generateMissSound,
   freeze: generateFreezeSound,
   bomb: generateBombSound,
+  gamestart: generateGameStartSound,
 };
 
 export function playSynthSound(audioContext, soundType) {

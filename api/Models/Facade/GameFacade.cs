@@ -1,7 +1,9 @@
 namespace Api.Models.Facade
 {
     using Api.Models;
-    public class GameFacade
+    using Api.Models.Proxy;
+    
+    public class GameFacade : IGameFacade
     {
         private readonly IGameRenderingSubsystem _renderingSubsystem;
         private readonly IGameLogicSubsystem _gameLogicSubsystem;
@@ -76,6 +78,12 @@ namespace Api.Models.Facade
         public void PlaySuccessSound()
         {
             _audioSubsystem.PlayCatchSound();
+        }
+
+        public void UpdateGameState()
+        {
+            // Placeholder for game state updates
+            Console.WriteLine("🎮 Updating game state...");
         }
 
         public object GetSystemReport()

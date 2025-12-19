@@ -1,6 +1,10 @@
 using Api.Models;
 using Api.Models.Facade;
 using Api.Models.Flyweight;
+using Api.Models.Proxy;
+using Api.Models.ChainOfResponsibility;
+using Api.Models.Visitor;
+using Api.Models.Mediator;
 using Microsoft.AspNetCore.SignalR;
 using Api.Models.Dto;
 
@@ -12,12 +16,33 @@ namespace Api.Hubs
         private static Session _session = Session.Instance;
         private readonly IHubContext<GameHub> _hubContext;
         private readonly ILogger<GameHub> _logger;
-        private readonly GameFacade _gameFacade = new GameFacade();
+        
+        // PROXY PATTERN: Wrap GameFacade with performance monitoring proxy (STATIC - created once)
+        private static readonly MetricsGameFacadeProxy _gameFacade = new MetricsGameFacadeProxy(new GameFacade());
+        
+        // CHAIN OF RESPONSIBILITY: Validates catch attempts through 5 handlers (STATIC - created once)
+        private static readonly CatchValidationChain _catchChain = new CatchValidationChain();
+        
+        // MEDIATOR PATTERN: Coordinates Player, Scoreboard, AudioSubsystem
+        private static readonly GameEventMediator _mediator = new GameEventMediator();
+        private static bool _mediatorInitialized = false;
+
+        // PROXY PATTERN (Security): only host can reset/end/start
+        private static SessionAccessControlProxy? _sessionSecurityProxy = null;
 
         public GameHub(IHubContext<GameHub> hubContext, ILogger<GameHub> logger)
         {
             _hubContext = hubContext;
             _logger = logger;
+            
+            // MEDIATOR: Register components once
+            if (!_mediatorInitialized)
+            {
+                _mediator.RegisterScoreboard(_session.Scoreboard);
+                _mediator.RegisterAudioSubsystem(new VirtualAudioSubsystemProxy());
+                _mediatorInitialized = true;
+                Console.WriteLine("🎯 Mediator initialized with Scoreboard and AudioSubsystem");
+            }
         }
 
         // ==================== ENHANCED JOIN WITH MEMENTO ====================
@@ -57,6 +82,13 @@ namespace Api.Hubs
             await Clients.Caller.SendAsync("ReceivePersistentId", playerPersistentId);
 
             _gameFacade.RenderAllPlayers(allPlayers);
+            
+            // MEDIATOR: Register player and notify PlayerJoined event
+            _mediator.RegisterPlayer(player);
+            var playerJoinedEvent = new GameEvent("PlayerJoined");
+            playerJoinedEvent.AddData("PlayerName", player.Name);
+            playerJoinedEvent.AddData("ConnectionId", Context.ConnectionId);
+            _mediator.Notify(this, playerJoinedEvent);
 
             Console.WriteLine($"✅ Player {playerName} joined with score: {player.Score}!");
             Console.WriteLine($"Player {Context.ConnectionId} connection id!");
@@ -188,6 +220,12 @@ namespace Api.Hubs
             
             // Remove from session FIRST
             _session.RemovePlayer(Context.ConnectionId);
+
+            // If everyone left, clear host proxy so next session can pick a new host
+            if (_session.Players.Count == 0)
+            {
+                _sessionSecurityProxy = null;
+            }
             
             // THEN notify others
             await Clients.Others.SendAsync("PlayerLeft", Context.ConnectionId);
@@ -198,9 +236,32 @@ namespace Api.Hubs
         
         public async Task StartGame()
         {
+            var requesterPlayer = _session.GetPlayer(Context.ConnectionId);
+            var requesterId = requesterPlayer?.GetPersistentId() ?? Context.ConnectionId;
+
+            // First start defines the host. Subsequent StartGame calls must be by host.
+            _sessionSecurityProxy ??= new SessionAccessControlProxy(_session, requesterId);
+
+            try
+            {
+                _sessionSecurityProxy.StartGame(requesterId);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine(ex.Message);
+                await Clients.Caller.SendAsync("ActionDenied", ex.Message);
+                return;
+            }
+
             _session.StartGame();
+            _gameFacade.ResetMetrics();
             _gameFacade.InitializeGame();
             await Clients.All.SendAsync("GameStarted", _session.TimerDuration);
+            
+            // MEDIATOR: Notify GameStarted
+            var gameStartedEvent = new GameEvent("GameStarted");
+            gameStartedEvent.AddData("Duration", _session.TimerDuration);
+            _mediator.Notify(this, gameStartedEvent);
             
             _ = Task.Run(async () =>
             {
@@ -219,11 +280,20 @@ namespace Api.Hubs
                             _session.EndGame(); // Auto-saves all scores
                             _gameFacade.PlayGameOverSound();
                             _gameFacade.RenderAllPlayers(_session.GetAllPlayers());
+                            
+                            // PROXY PATTERN: Print performance metrics at game end
+                            Console.WriteLine("\n📊 PERFORMANCE METRICS (Proxy Pattern):");
+                            Console.WriteLine(_gameFacade.GetFormattedSummary());
                                     
                             // Send game ended notification
                             await _hubContext.Clients.All.SendAsync("GameEnded", new {
                                 winner = _session.GetWinner()?.Name,
-                                playerScores = _session.Players.ToDictionary(p => p.Value.Name, p => p.Value.Score)
+                                playerScores = _session.Players.ToDictionary(p => p.Value.Name, p => p.Value.Score),
+
+                                // PROXY PATTERN: send performance report to frontend
+                                performanceStats = new {
+                                    facadeOperations = _gameFacade.GetPerformanceReport()
+                                }
                             });
                             
                             // 🎣 NEW: Send fish collection to each player
@@ -251,6 +321,16 @@ namespace Api.Hubs
 
             if (fish != null && player != null)
             {
+                // CHAIN OF RESPONSIBILITY: Validate catch attempt through 5 handlers
+                var catchContext = _catchChain.ProcessCatchAttempt(player, fish, _session);
+                
+                if (!catchContext.IsValid)
+                {
+                    Console.WriteLine($"❌ Catch rejected by Chain: {catchContext.FailureReason}");
+                    await Clients.Caller.SendAsync("CatchFailed", catchContext.FailureReason);
+                    return;
+                }
+                
                 bool caught = _gameFacade.AttemptFishCatch(player, fish);
 
                 if (!caught)
@@ -261,13 +341,33 @@ namespace Api.Hubs
                 }
                 else
                 {
+                    // VISITOR PATTERN: Use visitors to calculate score and determine sound
+                    var scoreVisitor = new ScoreVisitor();
+                    var soundVisitor = new SoundVisitor();
+                    
+                    fish.Accept(scoreVisitor);
+                    fish.Accept(soundVisitor);
+                    
+                    // Apply visitor-calculated score instead of hardcoded fish.Points
+                    int pointsAwarded = scoreVisitor.CalculatedScore;
+                    player.Score += pointsAwarded;
+                    Console.WriteLine($"🎯 VISITOR: Awarded {pointsAwarded} points (breakdown: {scoreVisitor.ScoreBreakdown})");
+                    
                     player.AddCaughtFish(fish); // Add to player's collection
                     player.FishesPulledIn++; // Increment count
+                    
+                    // MEDIATOR: Notify FishCaught event
+                    var fishCaughtEvent = new GameEvent("FishCaught");
+                    fishCaughtEvent.AddData("PlayerName", player.Name);
+                    fishCaughtEvent.AddData("FishType", fish.Type);
+                    fishCaughtEvent.AddData("Points", pointsAwarded);
+                    _mediator.Notify(this, fishCaughtEvent);
+                    
                     var decorator = fish.Decorator;
                     if (decorator != null)
                     {
                         _gameFacade.ApplyEffect(player, decorator);
-                        await Clients.All.SendAsync("PlaySound", "catch");
+                        await Clients.All.SendAsync("PlaySound", soundVisitor.SoundCategory);
 
                         if (decorator.CausesFreeze())
                         {
@@ -296,8 +396,8 @@ namespace Api.Hubs
                     }
                     else
                     {
-                        Console.WriteLine($"✅ Fish caught! +{fish.Points} points");
-                        await Clients.All.SendAsync("PlaySound", "catch");
+                        Console.WriteLine($"✅ Fish caught! +{pointsAwarded} points");
+                        await Clients.All.SendAsync("PlaySound", soundVisitor.SoundEffect);
                     }
 
                     // AUTO-SAVE: After catching fish
@@ -396,6 +496,28 @@ namespace Api.Hubs
         public async Task ResetGame()
         {
             Console.WriteLine("Resetting game session...");
+
+            var requesterPlayer = _session.GetPlayer(Context.ConnectionId);
+            var requesterId = requesterPlayer?.GetPersistentId() ?? Context.ConnectionId;
+
+            if (_sessionSecurityProxy == null)
+            {
+                var msg = "❌ DENIED: No host has been established for this session.";
+                Console.WriteLine(msg);
+                await Clients.Caller.SendAsync("ActionDenied", msg);
+                return;
+            }
+
+            try
+            {
+                _sessionSecurityProxy.ResetGame(requesterId);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine(ex.Message);
+                await Clients.Caller.SendAsync("ActionDenied", ex.Message);
+                return;
+            }
             
             foreach (var player in _session.Players.Values)
             {
@@ -409,6 +531,7 @@ namespace Api.Hubs
             GameEnvironmentFactory factory = new SeaWaterEnvironmentFactory();
             _session.Environment = factory.getEnvironment();
             _gameFacade.PlaySuccessSound();
+            _gameFacade.ResetMetrics();
             _gameFacade.InitializeGame();
             
             await Clients.All.SendAsync("GameReset");
@@ -418,6 +541,53 @@ namespace Api.Hubs
             await Clients.All.SendAsync("GameEnvironmentData", envDto);
 
             Console.WriteLine("✅ Game reset complete!");
+        }
+
+        // Host-only: allow ending the game early
+        public async Task EndGameEarly()
+        {
+            var requesterPlayer = _session.GetPlayer(Context.ConnectionId);
+            var requesterId = requesterPlayer?.GetPersistentId() ?? Context.ConnectionId;
+
+            if (_sessionSecurityProxy == null)
+            {
+                var msg = "❌ DENIED: No host has been established for this session.";
+                Console.WriteLine(msg);
+                await Clients.Caller.SendAsync("ActionDenied", msg);
+                return;
+            }
+
+            try
+            {
+                _sessionSecurityProxy.EndGame(requesterId);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                Console.WriteLine(ex.Message);
+                await Clients.Caller.SendAsync("ActionDenied", ex.Message);
+                return;
+            }
+
+            // Match the normal end-of-game notifications
+            _gameFacade.PlayGameOverSound();
+            _gameFacade.RenderAllPlayers(_session.GetAllPlayers());
+
+            await _hubContext.Clients.All.SendAsync("GameEnded", new
+            {
+                winner = _session.GetWinner()?.Name,
+                playerScores = _session.Players.ToDictionary(p => p.Value.Name, p => p.Value.Score),
+                performanceStats = new
+                {
+                    facadeOperations = _gameFacade.GetPerformanceReport()
+                }
+            });
+
+            foreach (var connectionId in _session.Players.Keys)
+            {
+                await Clients.Client(connectionId).SendAsync("ShowPlayerFishCollection");
+            }
+
+            await SendScoreboardUpdate();
         }
         
         public override async Task OnDisconnectedAsync(Exception? exception)
