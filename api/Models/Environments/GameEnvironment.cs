@@ -52,7 +52,7 @@ namespace Api.Models
         protected virtual DarkWaterSettings GenerateDarkWaterSettings() => new DarkWaterSettings { Enabled = false };
 
         // Ensures properties are set (no nulls needed)
-        private void EnsureEnvironmentFeatures()
+        protected void EnsureEnvironmentFeatures()
         {
             // Hazards
             if (EnableHazardZones())
@@ -75,6 +75,10 @@ namespace Api.Models
             {
                 DarkWater = new DarkWaterSettings { Enabled = false };
             }
+        }
+        public void InitializeEnvironmentFeatures()
+        {
+            EnsureEnvironmentFeatures();
         }
         public List<Fish> GetAllFishesFlat()
         {

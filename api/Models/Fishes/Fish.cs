@@ -29,6 +29,7 @@ namespace Api.Models
         public IFishMove FishMove { get; set; } = null!;
         public IFishBehavior Behavior { get; set; }
         public IFishDecorator Decorator { get; set; } = null!;
+        public bool DisableBoundaryStrategyChange { get; set; } = false;
 
         // NEW CONSTRUCTOR for Flyweight (ADD THIS)
         protected Fish(FishSharedData sharedData, double x, double y)
@@ -75,8 +76,8 @@ namespace Api.Models
                 PositionY <= 0 ||
                 PositionY >= waterLevelHeight;
         }
-        
-        protected IFishMove GetNewMovementStrategy()
+
+        public IFishMove GetNewMovementStrategy()
         {
             Random random = new Random();
             int move = random.Next(5);
@@ -91,6 +92,11 @@ namespace Api.Models
                 _ => new RandomMove()
             };
         }
+        public void SetMoveStrategy(IFishMove move)
+        {
+            FishMove = move;
+        }
+
 
         // NEW PROPERTY: Get Points with decorator multiplier (Flyweight compatible)
         public int GetDecoratedPoints()
@@ -130,7 +136,7 @@ namespace Api.Models
         {
             FishMove.Move(this, environmentWidth, waterLevelHeight);
 
-            if (IsTouchingBoundary(environmentWidth, waterLevelHeight))
+            if (!DisableBoundaryStrategyChange && IsTouchingBoundary(environmentWidth, waterLevelHeight))
                 FishMove = GetNewMovementStrategy();
         }
 

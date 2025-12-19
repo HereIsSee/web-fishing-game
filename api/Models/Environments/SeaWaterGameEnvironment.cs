@@ -94,16 +94,42 @@ namespace Api.Models
         {
             int count = random.Next(2, 5);
             var zones = new List<HazardZone>();
+
             for (int i = 0; i < count; i++)
             {
+                int radius = random.Next(60, 140);
+
+                // If the water area is too small for this radius, clamp radius down.
+                int maxRadiusX = Math.Max(1, Width / 2);
+                int maxRadiusY = Math.Max(1, WaterLevelHeight / 2);
+                int maxAllowedRadius = Math.Min(maxRadiusX, maxRadiusY);
+
+                if (radius > maxAllowedRadius)
+                    radius = maxAllowedRadius;
+
+                float minX = radius;
+                float maxX = Width - radius;
+                float minY = radius;
+                float maxY = WaterLevelHeight - radius;
+
+                // If something is degenerate, fall back to safe values
+                float x = (maxX >= minX)
+                    ? (float)(minX + random.NextDouble() * (maxX - minX))
+                    : Width / 2f;
+
+                float y = (maxY >= minY)
+                    ? (float)(minY + random.NextDouble() * (maxY - minY))
+                    : WaterLevelHeight / 2f;
+
                 zones.Add(new HazardZone
                 {
-                    X = (float)(random.NextDouble() * Width),
-                    Y = (float)(random.NextDouble() * WaterLevelHeight),
-                    Radius = random.Next(60, 140),
+                    X = x,
+                    Y = y,
+                    Radius = radius,
                     SpeedMultiplier = 0.5f
                 });
             }
+
             return zones;
         }
 

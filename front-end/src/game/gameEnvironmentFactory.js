@@ -1,4 +1,5 @@
 function gameEnvironmentFactory(canvasContext, environmentData) {
+  console.log(environmentData);
   const drawBackground = () => {
     canvasContext.fillStyle = environmentData.skyColor ?? "#7ec5cae8";
     canvasContext.fillRect(0, 0, environmentData.width, environmentData.height);

@@ -74,6 +74,7 @@ namespace Api.Hubs
         // ==================== SIMPLE MEMENTO ENDPOINTS ====================
         private async Task SendGameEnvironmentToCaller()
         {
+            _session.Environment.InitializeEnvironmentFeatures();
             var dto = GameEnvironmentDtoFactory.FromEnvironment(_session.Environment);
             await Clients.Caller.SendAsync("GameEnvironmentData", dto);
         }
