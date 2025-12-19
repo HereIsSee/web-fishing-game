@@ -5,6 +5,21 @@ import fishFactory from "./fishFactory";
 import obstaclesFactory from "./objstaclesFactoroy";
 import InputAdapter from "./inputAdapter";
 
+const getHazardSpeedMultiplier = (hookX, hookY, hazardZones) => {
+  if (!hazardZones || hazardZones.length === 0) return 1;
+
+  let mult = 1;
+  for (const z of hazardZones) {
+    const dx = hookX - z.x;
+    const dy = hookY - z.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist <= z.radius) {
+      mult = Math.min(mult, z.speedMultiplier ?? 1);
+    }
+  }
+  return mult;
+};
+
 const GameCanvas = ({
   myConnectionId,
   connection,
@@ -22,14 +37,18 @@ const GameCanvas = ({
   useEffect(() => {
     playersRef.current = playersData;
   }, [playersData]);
+
   useEffect(() => {
     fishesRef.current = fishesData;
   }, [fishesData]);
+
   useEffect(() => {
     obstaclesRef.current = obstaclesData;
   }, [obstaclesData]);
 
   useEffect(() => {
+    if (!gameEnvironmentData) return;
+
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     const inputAdapter = inputAdapterRef.current;
@@ -37,12 +56,8 @@ const GameCanvas = ({
     canvas.width = gameEnvironmentData.width;
     canvas.height = gameEnvironmentData.height;
 
-    const handleKeyDown = (e) => {
-      inputAdapter.handleKeyDown(e);
-    };
-    const handleKeyUp = (e) => {
-      inputAdapter.handleKeyUp(e);
-    };
+    const handleKeyDown = (e) => inputAdapter.handleKeyDown(e);
+    const handleKeyUp = (e) => inputAdapter.handleKeyUp(e);
 
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
@@ -53,43 +68,45 @@ const GameCanvas = ({
     const draw = () => {
       ctx.save();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Flip coordinate system (your existing setup)
       ctx.translate(0, canvas.height);
       ctx.scale(1, -1);
 
       const gameEnvironment = gameEnvironmentFactory(ctx, gameEnvironmentData);
-      const player = playersRef.current[myConnectionId];
+      const player = playersRef.current?.[myConnectionId];
       const commands = inputAdapter.getCommands();
 
       if (player) {
-        const isRodCast = player.fishingRod.cast;
-
-       
-
-        // Determine hook speed and apply freeze/slow effects (from old version)
+        const isRodCast = !!player.fishingRod?.cast;
         let hookSpeed = 5;
 
+        // Freeze
         if (player.isFrozen && player.freezeEndTime) {
           const now = Date.now();
           const freezeEndMs = new Date(player.freezeEndTime).getTime();
-          if (now < freezeEndMs) {
-            hookSpeed = 0;
-          } else {
-            player.isFrozen = false;
-          }
+          if (now < freezeEndMs) hookSpeed = 0;
+          else player.isFrozen = false;
         }
 
+        // Slow from fish effects
         if (player.isSlowed && player.slowdownEndTime) {
           const now = Date.now();
           const slowdownEndMs = new Date(player.slowdownEndTime).getTime();
-          if (now < slowdownEndMs) {
-            hookSpeed *= 0.5;
-          } else {
-            player.isSlowed = false;
-          }
+          if (now < slowdownEndMs) hookSpeed *= 0.5;
+          else player.isSlowed = false;
         }
 
         if (isRodCast) {
-          // ROD CAST: Move hook with both WASD and Arrow keys (via inputAdapter commands)
+          // Hazard zone slowdown (environment-driven)
+          const hx = player.fishingRod.positionX;
+          const hy = player.fishingRod.positionY;
+          hookSpeed *= getHazardSpeedMultiplier(
+            hx,
+            hy,
+            gameEnvironmentData.hazardZones
+          );
+
           if (commands.moveUp) player.fishingRod.positionY += hookSpeed;
           if (commands.moveDown) player.fishingRod.positionY -= hookSpeed;
           if (commands.moveLeft) player.fishingRod.positionX -= hookSpeed;
@@ -102,7 +119,7 @@ const GameCanvas = ({
             commands.moveRight
           ) {
             connection
-              .invoke(
+              ?.invoke(
                 "MoveHook",
                 player.fishingRod.positionX,
                 player.fishingRod.positionY
@@ -110,18 +127,19 @@ const GameCanvas = ({
               .catch((err) => console.error(err));
           }
         } else {
-          // ROD NOT CAST: Move boat with both A/D and Arrow Left/Right (via inputAdapter commands)
-          if (commands.moveLeft) player.boat.positionX -= player.boat.movementSpeed;
-          if (commands.moveRight) player.boat.positionX += player.boat.movementSpeed;
+          if (commands.moveLeft)
+            player.boat.positionX -= player.boat.movementSpeed;
+          if (commands.moveRight)
+            player.boat.positionX += player.boat.movementSpeed;
 
           if (commands.moveLeft || commands.moveRight) {
             connection
-              .invoke("MoveBoatTo", player.boat.positionX)
+              ?.invoke("MoveBoatTo", player.boat.positionX)
               .catch((err) => console.error(err));
           }
         }
 
-        // Apply bounds (same as before)
+        // Bounds
         if (player.fishingRod.positionX < 0) player.fishingRod.positionX = 0;
         if (player.fishingRod.positionX > gameEnvironmentData.width)
           player.fishingRod.positionX = gameEnvironmentData.width;
@@ -136,34 +154,59 @@ const GameCanvas = ({
         )
           player.boat.positionX = gameEnvironmentData.width - player.boat.width;
 
-        // Cast toggle with cooldown (using inputAdapter cast trigger)
+        // Cast toggle
         const now = Date.now();
-        if (commands.castTrigger && now - lastCastTimeRef.current > castCooldownMs) {
-          connection.invoke("ToggleFishingRodCast").catch((err) => console.error(err));
+        if (
+          commands.castTrigger &&
+          now - lastCastTimeRef.current > castCooldownMs
+        ) {
+          connection
+            ?.invoke("ToggleFishingRodCast")
+            .catch((err) => console.error(err));
           lastCastTimeRef.current = now;
           inputAdapter.clearCastTrigger();
         }
       }
 
-      const players = Object.values(playersRef.current).map((p) =>
+      const players = Object.values(playersRef.current || {}).map((p) =>
         playerFactory(ctx, p, myConnectionId)
       );
-      const fishes = fishesRef.current.map((f) => fishFactory(ctx, f));
-      const obstacles = obstaclesRef.current.map((o) => obstaclesFactory(ctx, o));
+      const fishes = (fishesRef.current || []).map((f) => fishFactory(ctx, f));
+      const obstacles = (obstaclesRef.current || []).map((o) =>
+        obstaclesFactory(ctx, o)
+      );
 
+      // Draw normal scene
       gameEnvironment.drawEnvironment();
       obstacles.forEach((o) => o.drawObstacle());
       fishes.forEach((f) => f.drawFish());
+
       players.forEach((p) => {
         p.drawPlayer();
         p.drawHook();
+
         fishes.forEach((f) => {
-          const caughtFishId = p.hasHookedFish(f.id, f.positionX, f.positionY, f.radius);
+          const caughtFishId = p.hasHookedFish(
+            f.id,
+            f.positionX,
+            f.positionY,
+            f.radius
+          );
           if (caughtFishId !== null) {
-            connection.invoke("CatchFish", caughtFishId).catch((err) => console.error("Failed to catch fish:", err));
+            connection
+              ?.invoke("CatchFish", caughtFishId)
+              .catch((err) => console.error("Failed to catch fish:", err));
           }
         });
       });
+
+      // Draw DARK MASK LAST (water-only, with real punch-out)
+      const me = playersRef.current?.[myConnectionId];
+      const spotlight = me?.fishingRod?.cast
+        ? { x: me.fishingRod.positionX, y: me.fishingRod.positionY }
+        : null;
+
+      gameEnvironment.drawDarkMask?.(spotlight);
 
       ctx.restore();
       requestAnimationFrame(draw);
@@ -175,7 +218,7 @@ const GameCanvas = ({
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [connection, gameEnvironmentData]);
+  }, [connection, gameEnvironmentData, myConnectionId]);
 
   return <canvas ref={canvasRef} />;
 };

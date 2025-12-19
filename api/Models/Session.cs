@@ -17,7 +17,7 @@ namespace Api.Models
         public ConcurrentDictionary<string, Player> Players { get; } = new();
 
         public GameState State { get; set; } = GameState.Waiting;
-        public int TimerDuration { get; set; } = 40;
+        public int TimerDuration { get; set; } = 40000;
 
         // ==================== SIMPLE MEMENTO INTEGRATION ====================
         private readonly SaveManager _saveManager = SaveManager.Instance;

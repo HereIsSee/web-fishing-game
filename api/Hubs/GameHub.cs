@@ -2,6 +2,8 @@ using Api.Models;
 using Api.Models.Facade;
 using Api.Models.Flyweight;
 using Microsoft.AspNetCore.SignalR;
+using Api.Models.Dto;
+
 
 namespace Api.Hubs
 {
@@ -26,20 +28,20 @@ namespace Api.Hubs
             if (existingPlayer != null)
             {
                 Console.WriteLine($"⚠️ Player {existingPlayer.Name} already connected (ID: {Context.ConnectionId})");
-                
+
                 // Just send existing data, don't create new player
                 await Clients.Caller.SendAsync("ReceiveConnectionId", Context.ConnectionId);
                 await Clients.Caller.SendAsync("ReceiveAllPlayers", _session.GetAllPlayers());
                 await Clients.Caller.SendAsync("ReceivePersistentId", existingPlayer.GetPersistentId());
                 return;
             }
-            
+
             Console.WriteLine($"🎣 Player {playerName} joining session...");
             Console.WriteLine($"🔑 Persistent ID: {persistentId ?? "None"}");
 
             // 1. FIRST add player to session
             _session.AddPlayer(Context.ConnectionId, playerName, persistentId);
-            
+
             // 2. THEN get the player (now it exists!)
             var player = _session.GetPlayer(Context.ConnectionId);
 
@@ -47,6 +49,8 @@ namespace Api.Hubs
             await Clients.Caller.SendAsync("ReceiveAllPlayers", allPlayers);
             await Clients.All.SendAsync("PlayerJoined", player);
             await Clients.Caller.SendAsync("ReceiveConnectionId", Context.ConnectionId);
+
+            await SendGameEnvironmentToCaller();
 
             // Send persistent ID back to frontend for localStorage
             var playerPersistentId = player.GetPersistentId();
@@ -68,6 +72,13 @@ namespace Api.Hubs
         }
 
         // ==================== SIMPLE MEMENTO ENDPOINTS ====================
+        private async Task SendGameEnvironmentToCaller()
+        {
+            var dto = GameEnvironmentDtoFactory.FromEnvironment(_session.Environment);
+            await Clients.Caller.SendAsync("GameEnvironmentData", dto);
+        }
+
+        
         public async Task SaveScore()
         {
             try
@@ -373,6 +384,10 @@ namespace Api.Hubs
             
             await Clients.All.SendAsync("GameReset");
             await SendScoreboardUpdate();
+
+            var envDto = GameEnvironmentDtoFactory.FromEnvironment(_session.Environment);
+            await Clients.All.SendAsync("GameEnvironmentData", envDto);
+
             Console.WriteLine("✅ Game reset complete!");
         }
         

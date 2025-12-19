@@ -8,7 +8,7 @@ import { playSynthSound } from "./game/audioGenerator.js";
 import {
   // playersData,
   // fishesData,
-  gameEnvironmentData,
+  // gameEnvironmentData,
   obstaclesData,
 } from "./game/dummyData.js";
 
@@ -19,7 +19,8 @@ const useAudioManager = () => {
   const initAudioContext = () => {
     if (!audioContextRef.current) {
       try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const audioContext = new (window.AudioContext ||
+          window.webkitAudioContext)();
         audioContextRef.current = audioContext;
         console.log(" Audio context initialized");
       } catch (e) {
@@ -93,6 +94,7 @@ function App() {
   const [scoreboardData, setScoreboardData] = useState(null);
   const [persistentPlayerId, setPersistentPlayerId] = useState(null);
   const [fishCollection, setFishCollection] = useState(null);
+  const [gameEnvironmentData, setGameEnvironmentData] = useState(null);
 
   // Small ref used to allow the next ScoreboardUpdated to reset the timer
   // only when a real PlayerJoined event happened. This prevents routine
@@ -107,7 +109,7 @@ function App() {
     console.log("🎯 [FRONTEND] Setting up page unload detection for leaving");
     const handleBeforeUnload = async () => {
       console.log("🎯 [FRONTEND] Browser/tab closing - notifying server");
-      if (connection && connection.state === 'Connected') {
+      if (connection && connection.state === "Connected") {
         try {
           // Try to notify server we're leaving
           await connection.invoke("LeaveSession");
@@ -117,15 +119,12 @@ function App() {
       }
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [connection]);
-
-
-
 
   // const [gameEnvironmentData, setGameEnvironmentData] = useState({});
   // const [obstaclesData, setObstaclesData] = useState([]);
@@ -145,54 +144,54 @@ function App() {
   }, []);
 
   const getPersistentId = () => {
-  let pid = localStorage.getItem('fishing_persistent_id');
+    let pid = localStorage.getItem("fishing_persistent_id");
     if (!pid) {
-      pid = 'player_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('fishing_persistent_id', pid);
+      pid =
+        "player_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem("fishing_persistent_id", pid);
     }
     return pid;
   };
 
   const joinGame = async () => {
-
     console.log("🔄 Clearing previous session data...");
     localStorage.removeItem(`active_${playerName}`);
-    
-    
 
     if (!playerName.trim()) return;
     console.log(`🎯 [FRONTEND] Player name: "${playerName}"`);
 
-    
-
     // CHECK: Prevent multiple tabs with same player
-    const browserSessionId = localStorage.getItem('browser_session_id');
-    const activeBrowser = localStorage.getItem('active_browser');
+    const browserSessionId = localStorage.getItem("browser_session_id");
+    const activeBrowser = localStorage.getItem("active_browser");
 
-    console.log("🔍 TAB CHECK - BrowserSessionId:", browserSessionId, "ActiveBrowser:", activeBrowser);
+    console.log(
+      "🔍 TAB CHECK - BrowserSessionId:",
+      browserSessionId,
+      "ActiveBrowser:",
+      activeBrowser
+    );
 
     if (activeBrowser && activeBrowser === browserSessionId) {
       console.log("❌ TAB BLOCKED - Same browser session detected!");
-      alert("❗ You already have this game open in another tab!");
-      return;
+      // alert("❗ You already have this game open in another tab!");
+      // return;
     } else {
       console.log("✅ TAB ALLOWED - No active session or different session");
     }
 
     // Prevent multiple clicks
-    if (connection && connection.state === 'Connected') {
+    if (connection && connection.state === "Connected") {
       console.log("⚠️ Already connected!");
       return;
     }
-        
 
     try {
       console.log("🔄 Starting connection...");
-      
+
       // Create NEW connection if none exists or if disconnected
       let currentConnection = connection;
-      
-      if (!currentConnection || currentConnection.state === 'Disconnected') {
+
+      if (!currentConnection || currentConnection.state === "Disconnected") {
         const newConnection = new signalR.HubConnectionBuilder()
           .withUrl("http://localhost:5112/gamehub", {
             skipNegotiation: true,
@@ -200,24 +199,33 @@ function App() {
           })
           .configureLogging(signalR.LogLevel.Debug)
           .build();
-        
+
         setConnection(newConnection);
         currentConnection = newConnection;
       }
-      
+
       // Start connection if not already started
-      if (currentConnection.state !== 'Connected') {
+      if (currentConnection.state !== "Connected") {
         await currentConnection.start();
         console.log("✅ Connected!");
       }
 
-      let sessionId = localStorage.getItem('browser_session_id');
+      let sessionId = localStorage.getItem("browser_session_id");
       if (!sessionId) {
-        sessionId = 'browser_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('browser_session_id', sessionId);
+        sessionId =
+          "browser_" +
+          Date.now() +
+          "_" +
+          Math.random().toString(36).substr(2, 9);
+        localStorage.setItem("browser_session_id", sessionId);
       }
-      localStorage.setItem('active_browser', sessionId);
-      console.log("✅ SET ACTIVE BROWSER:", sessionId, "for player:", playerName);
+      localStorage.setItem("active_browser", sessionId);
+      console.log(
+        "✅ SET ACTIVE BROWSER:",
+        sessionId,
+        "for player:",
+        playerName
+      );
       // Subscribe to backend events (only once)
       if (!currentConnection._eventsRegistered) {
         currentConnection.on("ReceiveAllPlayers", (allPlayers) => {
@@ -241,11 +249,14 @@ function App() {
             // ignore
           }
         });
+        currentConnection.on("GameEnvironmentData", (environmentData) => {
+          setGameEnvironmentData(environmentData);
+        });
 
         currentConnection.on("PlayerLeft", (connectionId) => {
           console.log("🚪 Player left:", connectionId);
           console.log("🗑️ Removing player data for connection:", connectionId);
-          
+
           setPlayersData((prevPlayers) => {
             const newPlayers = { ...prevPlayers };
             delete newPlayers[connectionId];
@@ -311,9 +322,10 @@ function App() {
               null;
             const serverTs = data.serverTimestamp ?? data.serverTime ?? null;
             if (rem != null) {
-              const serverEndTime = (serverTs != null)
-                ? serverTs + rem * 1000
-                : Date.now() + rem * 1000;
+              const serverEndTime =
+                serverTs != null
+                  ? serverTs + rem * 1000
+                  : Date.now() + rem * 1000;
               data._serverEndTime = serverEndTime;
               data._receivedAt = receivedAt;
             } else {
@@ -339,7 +351,11 @@ function App() {
                 return data;
               }
 
-              if (oldEnd && newEnd && prev.currentGameState === data.currentGameState) {
+              if (
+                oldEnd &&
+                newEnd &&
+                prev.currentGameState === data.currentGameState
+              ) {
                 const diff = Math.abs(oldEnd - newEnd);
                 if (diff <= 1000) {
                   return {
@@ -364,30 +380,35 @@ function App() {
         });
 
         currentConnection.on("GameEnded", (result) => {
-          console.log("🎉 Game ended! Winner:", result.winner, "Scores:", result.playerScores);
+          console.log(
+            "🎉 Game ended! Winner:",
+            result.winner,
+            "Scores:",
+            result.playerScores
+          );
           setScoreboardData({
             playerScores: result.playerScores,
             currentGameState: "Finished",
-            remainingTime: 0
+            remainingTime: 0,
           });
 
           // 🎣 NEW: Fetch fish collection when game ends
-          if (currentConnection.state === 'Connected') {
+          if (currentConnection.state === "Connected") {
             currentConnection.invoke("ShowPlayerFishCollection");
           }
         });
 
         currentConnection.on("FishCollection", (stats) => {
           console.log("🎣🎣🎣 YOUR CATCH REPORT 🎣🎣🎣", stats);
-          
+
           // SAFE ACCESS - handle null/undefined
           const total = stats?.TotalCaught ?? 0;
           console.log(`Total fish caught: ${total}`);
-          
+
           setFishCollection(stats);
-          
+
           console.log("\n📊 By type:");
-          
+
           // FIXED: Add null check before Object.entries
           const fishByType = stats?.FishByType ?? {};
           for (const [type, count] of Object.entries(fishByType)) {
@@ -405,14 +426,17 @@ function App() {
 
         currentConnection.on("ReceivePersistentId", (serverPersistentId) => {
           console.log("🔑 Received persistent ID:", serverPersistentId);
-          localStorage.setItem('fishing_persistent_id', serverPersistentId);
+          localStorage.setItem("fishing_persistent_id", serverPersistentId);
           setPersistentPlayerId(serverPersistentId);
         });
 
         currentConnection.on("ScoreSaved", (data) => {
           console.log("💾 Score saved:", data);
           if (data.encryptedData) {
-            localStorage.setItem(`fishing_save_${playerName}`, data.encryptedData);
+            localStorage.setItem(
+              `fishing_save_${playerName}`,
+              data.encryptedData
+            );
           }
         });
 
@@ -430,28 +454,36 @@ function App() {
         });
 
         currentConnection.on("ClearActivePlayer", (playerName) => {
-          console.log("🧹🧹🧹 SERVER CLEAR ACTIVE PLAYER CALLED FOR:", playerName);
-          console.log("🧹 BEFORE clear - active_browser:", localStorage.getItem('active_browser'));
-          
-          localStorage.removeItem('active_browser');
+          console.log(
+            "🧹🧹🧹 SERVER CLEAR ACTIVE PLAYER CALLED FOR:",
+            playerName
+          );
+          console.log(
+            "🧹 BEFORE clear - active_browser:",
+            localStorage.getItem("active_browser")
+          );
+
+          localStorage.removeItem("active_browser");
           localStorage.removeItem(`active_${playerName}`);
-          
-          console.log("🧹 AFTER clear - active_browser:", localStorage.getItem('active_browser'));
+
+          console.log(
+            "🧹 AFTER clear - active_browser:",
+            localStorage.getItem("active_browser")
+          );
         });
 
         // Connection state handlers
         currentConnection.onclose(() => {
           console.log("🔌 Connection closed");
-          
+
           // Clear the browser lock immediately
-          localStorage.removeItem('active_browser');
-          
+          localStorage.removeItem("active_browser");
+
           // ALSO clear by player name (remove old logic)
           localStorage.removeItem(`active_${playerName}`);
-          
+
           setJoined(false);
         });
-
 
         currentConnection.onreconnecting(() => {
           console.log("🔄 Reconnecting...");
@@ -459,7 +491,7 @@ function App() {
 
         currentConnection.onreconnected(() => {
           console.log("✅ Reconnected!");
-          localStorage.setItem(`active_${playerName}`, 'active');
+          localStorage.setItem(`active_${playerName}`, "active");
         });
 
         // Mark that events have been registered
@@ -469,18 +501,17 @@ function App() {
       // Invoke join session
       const persistentId = getPersistentId();
       console.log("🔑 Using persistent ID:", persistentId);
-      
+
       await currentConnection.invoke("JoinSession", playerName, persistentId);
       console.log("✅ JoinSession called with persistent ID:", persistentId);
 
       setJoined(true);
-
     } catch (err) {
       console.error("❌ Connection error:", err);
-      
+
       // Reset connection state on error
-      localStorage.setItem(`active_${playerName}`, 'disconnected');
-      
+      localStorage.setItem(`active_${playerName}`, "disconnected");
+
       if (connection) {
         try {
           await connection.stop();
@@ -521,19 +552,21 @@ function App() {
       ) : (
         <div>
           <h1>Got here</h1>
-          <Scoreboard 
-            scoreboardData={scoreboardData} 
+          <Scoreboard
+            scoreboardData={scoreboardData}
             fishCollection={fishCollection}
           />
-          
+
           {/* KEEP SPLASHSCREEN BUT PASS fishCollection TO IT */}
-          {(scoreboardData && (scoreboardData.currentGameState === 'Ended' || scoreboardData.currentGameState === 'Finished')) ? (
-            <SplashScreen 
-              playerScores={scoreboardData.playerScores || {}} 
-              onRestart={handlePlayAgain} 
-              onClose={() => {}} 
-              fishCollection={fishCollection}  // ADD THIS
-              connection={connection}  // ADD THIS
+          {scoreboardData &&
+          (scoreboardData.currentGameState === "Ended" ||
+            scoreboardData.currentGameState === "Finished") ? (
+            <SplashScreen
+              playerScores={scoreboardData.playerScores || {}}
+              onRestart={handlePlayAgain}
+              onClose={() => {}}
+              fishCollection={fishCollection} // ADD THIS
+              connection={connection} // ADD THIS
             />
           ) : (
             <GameCanvas
