@@ -206,7 +206,8 @@ namespace Api.Hubs
                 while (_session.IsActive)
                 {
                     _session.Environment.Update();
-                    await _hubContext.Clients.All.SendAsync("UpdateFishes", _session.Environment.Fishes);
+                    await _hubContext.Clients.All.SendAsync("UpdateFishes", _session.Environment.GetAllFishesFlat());
+
                             
                     if (_session.State == GameState.Playing)
                     {
@@ -244,7 +245,7 @@ namespace Api.Hubs
         public async Task CatchFish(int fishId)
         {
             var player = _session.GetPlayer(Context.ConnectionId);
-            var fish = _session.Environment.Fishes.FirstOrDefault(f => f.Id == fishId);
+            var fish = _session.Environment.GetAllFishesFlat().FirstOrDefault(f => f.Id == fishId);
 
 
             if (fish != null && player != null)
@@ -307,29 +308,33 @@ namespace Api.Hubs
                 UpdateFishStateToScared(fish, fishId);
 
                 _session.Environment.DeleteFish(fishId);
-                await Clients.All.SendAsync("UpdateFishes", _session.Environment.Fishes);
+                await Clients.All.SendAsync("UpdateFishes", _session.Environment.GetAllFishesFlat());
                 await Clients.All.SendAsync("PlayerUpdated", player);
                 await SendScoreboardUpdate();
             }
         }
         public void UpdateFishStateToScared(Fish fish, int fishId)
         {
-            // Scare nearby fish within 100 units of the caught fish position
             const double scareRadius = 300.0;
             var scareRadiusSq = scareRadius * scareRadius;
 
-            foreach (var other in _session.Environment.Fishes)
+            foreach (var group in _session.Environment.FishGroups)
             {
-                if (other.Id == fishId) continue;
-
-                var dx = other.PositionX - fish.PositionX;
-                var dy = other.PositionY - fish.PositionY;
-
-                if (dx * dx + dy * dy <= scareRadiusSq)
+                foreach (var f in group.Flatten())
                 {
-                    other.TriggerScare();
+                    if (f.Id == fishId) continue;
+
+                    var dx = f.PositionX - fish.PositionX;
+                    var dy = f.PositionY - fish.PositionY;
+
+                    if (dx*dx + dy*dy <= scareRadiusSq)
+                    {
+                        group.TriggerScare();
+                        break;
+                    }
                 }
             }
+
         }
 
         // ==================== ORIGINAL METHODS UNCHANGED ====================

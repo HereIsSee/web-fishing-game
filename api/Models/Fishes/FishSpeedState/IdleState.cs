@@ -6,7 +6,7 @@ namespace Api.Models
 
         public void Update(Fish fish, int w, int h)
         {
-            fish.ApplySpeedMultiplier(0.3);
+            fish.ApplySpeedMultiplier(0.6);
             fish.MoveWithCurrentStrategy(w, h);
         }
     }

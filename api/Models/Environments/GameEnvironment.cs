@@ -8,13 +8,13 @@ namespace Api.Models
         public int Height { get; set; }
 
         public int WaterLevelHeight { get; set; }
-        public List<Fish> Fishes { get; set; } = new();
+        public List<IFishGroup> FishGroups { get; set; } = new();
         public List<Obstacle> Obstacles { get; set; } = new();
         public string WaterColor { get; set; } = null!;
         public string SkyColor { get; set; } = null!;
         public List<HazardZone> HazardZones { get; set; } = new();
         public DarkWaterSettings DarkWater { get; set; } = new DarkWaterSettings { Enabled = false };
-                public void Update()
+        public void Update()
         {
             PreUpdate();
 
@@ -33,10 +33,12 @@ namespace Api.Models
         // Primitive operations (steps)
         protected virtual void UpdateFish()
         {
-            foreach (var fish in Fishes)
-                fish.UpdatePosition(Width, WaterLevelHeight);
-        }
+            foreach (var group in FishGroups)
+            {
+                group.Update(Width, WaterLevelHeight);
+            }
 
+        }
         protected virtual void ApplyEnvironmentEffects() { }
 
         protected abstract void MaintainPopulation();
@@ -73,6 +75,10 @@ namespace Api.Models
             {
                 DarkWater = new DarkWaterSettings { Enabled = false };
             }
+        }
+        public List<Fish> GetAllFishesFlat()
+        {
+            return FishGroups.SelectMany(g => g.Flatten()).ToList();
         }
 
         public abstract void DeleteFish(int fishId);

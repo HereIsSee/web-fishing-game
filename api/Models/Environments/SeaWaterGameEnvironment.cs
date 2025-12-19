@@ -21,7 +21,8 @@ namespace Api.Models
         // Template step override
         protected override void MaintainPopulation()
         {
-            if (Fishes.Count <= 15)
+            var totalFish = GetAllFishesFlat().Count;
+            if (totalFish <= 15)
                 RefillFishes();
         }
 
@@ -36,15 +37,53 @@ namespace Api.Models
                 double y = random.NextDouble() * WaterLevelHeight;
 
                 int roll = random.Next(100);
-                Fish fish = roll switch
+
+                // COMMON fish: sometimes spawn as a school
+                if (roll < 50)
                 {
-                    < 50 => fishFactory.CreateCommonFish(x, y),
+                    bool spawnSchool = random.Next(100) < 25; // 25% chance
+                    if (spawnSchool)
+                    {
+                        // school size + spawn radius
+                        int schoolSize = random.Next(4, 8);
+                        double schoolRadius = random.Next(30, 70);
+
+                        var fishes = new List<Fish>();
+                        for (int s = 0; s < schoolSize; s++)
+                        {
+                            // random point in a circle around (x,y)
+                            var angle = random.NextDouble() * Math.PI * 2;
+                            var r = Math.Sqrt(random.NextDouble()) * schoolRadius;
+
+                            var sx = x + Math.Cos(angle) * r;
+                            var sy = y + Math.Sin(angle) * r;
+
+                            // clamp inside water
+                            sx = Math.Max(0, Math.Min(Width, sx));
+                            sy = Math.Max(0, Math.Min(WaterLevelHeight, sy));
+
+                            fishes.Add(fishFactory.CreateCommonFish(sx, sy));
+                        }
+
+                        FishGroups.Add(new FishSchool(fishes));
+                        continue; // IMPORTANT: we already added the group
+                    }
+
+                    // otherwise single common fish
+                    var fish = fishFactory.CreateCommonFish(x, y);
+                    FishGroups.Add(new FishLeaf(fish));
+                    continue;
+                }
+
+                // Non-common fish: spawn as single fish
+                Fish single = roll switch
+                {
                     < 80 => fishFactory.CreateRareFish(x, y),
                     < 90 => fishFactory.CreateLegendaryFish(x, y),
                     _ => fishFactory.CreateDangerFish(x, y)
                 };
 
-                Fishes.Add(fish);
+                FishGroups.Add(new FishLeaf(single));
             }
         }
 
@@ -80,7 +119,30 @@ namespace Api.Models
 
         public override void DeleteFish(int fishId)
         {
-            Fishes.RemoveAll(f => f.Id == fishId);
+            // Remove fish from whatever group it belongs to
+            for (int i = FishGroups.Count - 1; i >= 0; i--)
+            {
+                var group = FishGroups[i];
+                var removed = group.RemoveFish(fishId);
+
+                // if this was a school and it became empty, remove the group
+                if (group is FishSchool school && school.IsEmpty)
+                {
+                    FishGroups.RemoveAt(i);
+                    continue;
+                }
+
+                // if this was a leaf and it now contains null, remove it
+                if (group is FishLeaf leaf && !leaf.Flatten().Any())
+                {
+                    FishGroups.RemoveAt(i);
+                    continue;
+                }
+
+                // Once removed, we're done
+                if (removed) break;
+            }
         }
+
     }
 }
