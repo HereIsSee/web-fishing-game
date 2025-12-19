@@ -25,16 +25,14 @@ namespace Api.Models
             this.FishMove = new RandomMove();
             this.Behavior = new AggressiveBehavior();
             this.Decorator = new NormalFishDecorator();
+
+            InitializeBaseSpeedIfNeeded();
+            SetState(new IdleState());
         }
 
         public override void UpdatePosition(int environmentWidth, int waterLevelHeight)
         {
-            this.FishMove.Move(this, environmentWidth, waterLevelHeight);
-
-            if(IsTouchingBoundary(environmentWidth, waterLevelHeight))
-            {
-                this.FishMove = GetNewMovementStrategy();
-            }
+            CurrentState.Update(this, environmentWidth, waterLevelHeight);
         }
     }
 }

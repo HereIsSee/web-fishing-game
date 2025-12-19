@@ -49,7 +49,7 @@ namespace Api.Models
         }
 
         protected override bool EnableHazardZones() => true;
-        protected override bool EnableDarkWater() => true;
+        protected override bool EnableDarkWater() => false;
 
         protected override List<HazardZone> GenerateHazardZones()
         {

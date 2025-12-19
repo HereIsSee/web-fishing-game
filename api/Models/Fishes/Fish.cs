@@ -21,6 +21,8 @@ namespace Api.Models
         public string Type { get; protected set; } = string.Empty;
 
         public double MovementSpeed { get; set; }
+        public IFishSpeedState CurrentState { get; private set; } = new IdleState();
+        public double BaseSpeed { get; private set; } = 0;
         public int Points { get; set; }
         public double Radius { get; set; }
         public string Color { get; set; } = null!;
@@ -101,5 +103,42 @@ namespace Api.Models
 
         // NEW METHOD: Check if using Flyweight
         public bool IsUsingFlyweight() => _sharedData != null;
+
+        // Call this after MovementSpeed is initialized (flyweight already sets it; old constructors need a call)
+        public void InitializeBaseSpeedIfNeeded()
+        {
+            if (BaseSpeed <= 0)
+                BaseSpeed = MovementSpeed;
+        }
+
+        // State transition
+        public void SetState(IFishSpeedState newState)
+        {
+            InitializeBaseSpeedIfNeeded();
+            CurrentState = newState;
+        }
+
+        // Apply multiplier each tick without losing base speed
+        public void ApplySpeedMultiplier(double multiplier)
+        {
+            InitializeBaseSpeedIfNeeded();
+            MovementSpeed = BaseSpeed * multiplier;
+        }
+
+        // This is your existing movement logic centralized
+        public void MoveWithCurrentStrategy(int environmentWidth, int waterLevelHeight)
+        {
+            FishMove.Move(this, environmentWidth, waterLevelHeight);
+
+            if (IsTouchingBoundary(environmentWidth, waterLevelHeight))
+                FishMove = GetNewMovementStrategy();
+        }
+
+        // Event: fish caught nearby => immediately become scared (timer resets by creating new state)
+        public void TriggerScare()
+        {
+            SetState(new ScaredState(120));
+        }
+
     }
 }

@@ -240,11 +240,12 @@ namespace Api.Hubs
             
             await SendScoreboardUpdate();
         }
-        
+
         public async Task CatchFish(int fishId)
         {
             var player = _session.GetPlayer(Context.ConnectionId);
             var fish = _session.Environment.Fishes.FirstOrDefault(f => f.Id == fishId);
+
 
             if (fish != null && player != null)
             {
@@ -302,10 +303,32 @@ namespace Api.Hubs
                     Console.WriteLine($"💾 Auto-saved after fish catch: {player.Score}");
                 }
 
+                // Change nearby fish state to scared
+                UpdateFishStateToScared(fish, fishId);
+
                 _session.Environment.DeleteFish(fishId);
                 await Clients.All.SendAsync("UpdateFishes", _session.Environment.Fishes);
                 await Clients.All.SendAsync("PlayerUpdated", player);
                 await SendScoreboardUpdate();
+            }
+        }
+        public void UpdateFishStateToScared(Fish fish, int fishId)
+        {
+            // Scare nearby fish within 100 units of the caught fish position
+            const double scareRadius = 300.0;
+            var scareRadiusSq = scareRadius * scareRadius;
+
+            foreach (var other in _session.Environment.Fishes)
+            {
+                if (other.Id == fishId) continue;
+
+                var dx = other.PositionX - fish.PositionX;
+                var dy = other.PositionY - fish.PositionY;
+
+                if (dx * dx + dy * dy <= scareRadiusSq)
+                {
+                    other.TriggerScare();
+                }
             }
         }
 
